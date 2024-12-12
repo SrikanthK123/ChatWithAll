@@ -245,7 +245,7 @@ const IndividualChat = () => {
       </div>
      
       
-      <div className="flex-1 p-4 overflow-y-auto max-h-[75vh]">
+      <div className="flex-1 p-4 overflow-y-auto max-h-[78vh]">
         <div className="space-y-4">
         {messages.map((msg) => {
   const isCurrentUser = msg.user_id === userData?.$id;
