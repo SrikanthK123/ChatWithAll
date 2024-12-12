@@ -58,6 +58,7 @@ const Leftsidebar = () => {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+    console.log(isOpen);
   };
 
   // Handle mouse down event to start dragging
@@ -104,7 +105,7 @@ const Leftsidebar = () => {
       <button
         onClick={toggleSidebar}
         onMouseDown={onMouseDown}
-        className="fixed p-2 m-1 bg-slate-800 text-white rounded-full md:hidden z-50"
+        className="fixed p-2 m-1 bg-slate-800 text-white rounded-full md:hidden z-50 "
         aria-label="Toggle Sidebar"
         style={{
           left: `${position.x}px`,
