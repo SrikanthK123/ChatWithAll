@@ -240,12 +240,18 @@ const IndividualChat = () => {
 
   return (
     <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
-      <div className='bg-slate-300 flex justify-center p-3 '>
-      <h3 className='bg-[#001529] text-xl text-center p-1 rounded-md text-white shadow-lg'>This is IndividualChatx page</h3>
-      </div>
+     <div
+  className="fixed top-0 left-0 right-0 flex justify-center items-center p-3 z-50"
+  style={{ backgroundColor: 'rgb(62 76 188 / 16%)' }}
+>
+  <h3 className="text-xl text-center px-4 py-2 rounded-md text-[#001529] font-bold  text-shadow-lg" style={{textShadow:'2px 2px 4px rgba(0, 0, 0, 0.5)'}}>
+  Chat Among Friends
+  </h3>
+</div>
+
      
       
-      <div className="flex-1 p-4 overflow-y-auto max-h-[79vh]">
+      <div className="flex-1 p-5 overflow-y-auto max-h-[86vh]">
         <div className="space-y-4">
         {messages.map((msg) => {
   const isCurrentUser = msg.user_id === userData?.$id;
@@ -316,7 +322,7 @@ const IndividualChat = () => {
         </div>
       </div>
       <div className="bg-[#001529] p-4 sticky bottom-0">
-  <form className="flex items-center gap-1 px-3" onSubmit={handleCreateMessage}>
+  <form className="flex items-center gap-1 px-4 lg:px-6" onSubmit={handleCreateMessage}>
   
     {showAttachmentOptions && (
       <div className="absolute bottom-16 left-0 bg-slate-600 shadow-md rounded-lg p-2 w-48 flex flex-col gap-2 z-50">
@@ -365,7 +371,7 @@ const IndividualChat = () => {
     )}
     <button
           type='submit'
-          className=" bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3"
+          className=" bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 "
         >
           <FaLocationArrow />
         </button>
