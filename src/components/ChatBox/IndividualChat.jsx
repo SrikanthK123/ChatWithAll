@@ -240,9 +240,7 @@ const IndividualChat = () => {
 
   return (
     <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
-      <div className='bg-slate-300 flex justify-center p-3 '>
-      <h3 className='bg-[#001529] text-xl text-center p-1 rounded-md text-white shadow-lg'>This is IndividualChat page</h3>
-      </div>
+   
      
       
       <div className="flex-1 p-4 overflow-y-auto max-h-[75vh]">
