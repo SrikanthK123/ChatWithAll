@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { FaImage, FaTrash, FaEllipsisV ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow, } from 'react-icons/fa'; 
+import { FaImage, FaTrash, FaEllipsisV ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile } from 'react-icons/fa'; 
 import { useUser } from '../../UseContext';
 import { account, client, databases } from "../../lib/appwrite";
 import { AlluseUsers } from '../../hook/AllUserData';
@@ -19,8 +19,9 @@ const IndividualChat = () => {
   const [isMessageFocused, setIsMessageFocused] = useState(false); // Track if textarea is focused
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false); 
   const [showPicker, setShowPicker] = useState(false);
-  const [text, setText] = useState("Edited");
-
+  const [latestUsername, setLatestUsername] = useState('');
+  const [latestMessage, setLatestMessage] = useState('');
+ 
   const formatTime = (date) => {
     let hours = date.getHours();
     const minutes = date.getMinutes();
@@ -83,6 +84,7 @@ const IndividualChat = () => {
             const isDuplicate = prevMessages.some((msg) => msg.$id === response.payload.$id);
             return isDuplicate ? prevMessages : [...prevMessages, response.payload];
           });
+          
         }
   
         if (response.events.includes('databases.*.collections.*.documents.*.delete')) {
@@ -247,10 +249,7 @@ const IndividualChat = () => {
   <h3 className="text-xl text-center px-4 py-2 rounded-md text-[#001529] font-bold  text-shadow-lg" style={{textShadow:'2px 2px 4px rgba(0, 0, 0, 0.5)'}}>
   Chat Among Friends
   </h3>
-</div>
-
-     
-      
+</div>  
       <div className="flex-1 p-5 overflow-y-auto max-h-[82vh]">
         <div className="space-y-4 mt-14">
         {messages.map((msg) => {
@@ -367,10 +366,11 @@ const IndividualChat = () => {
     </button>
   </form>
 </div>
+<marquee className='bg-blue-500'>
+  <p className='bg-[#001529] text-white m-3 w-fit p-2 rounded-lg px-4'>Enjoy the Chat!</p>
+</marquee>
 
-
-
-    </div>
+</div>
   );
 };
 
