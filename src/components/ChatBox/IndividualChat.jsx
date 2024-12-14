@@ -251,7 +251,7 @@ const IndividualChat = () => {
 
      
       
-      <div className="flex-1 p-5 overflow-y-auto max-h-[86vh]">
+      <div className="flex-1 p-5 overflow-y-auto max-h-[80vh]">
         <div className="space-y-4 mt-14">
         {messages.map((msg) => {
   const isCurrentUser = msg.user_id === userData?.$id;
@@ -323,7 +323,7 @@ const IndividualChat = () => {
       </div>
       <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
   <form
-    className="flex items-center gap-2 px-4 w-full max-w-3xl bg-gray-800 rounded-lg"
+    className="flex items-center gap-2 px-4 w-full max-w-3xl  rounded-lg"
     onSubmit={handleCreateMessage}
   >
     {/* Input for the message */}
@@ -335,7 +335,7 @@ const IndividualChat = () => {
       onChange={(e) => setMessageBody(e.target.value)}
       placeholder="Type your message..."
       className={`bg-gray-700 text-white w-full p-3 rounded-lg shadow-md resize-none ${
-        isMessageFocused ? "h-24" : "h-16"
+        isMessageFocused ? "h-20" : "h-12"
       } transition-all`}
     ></textarea>
 
