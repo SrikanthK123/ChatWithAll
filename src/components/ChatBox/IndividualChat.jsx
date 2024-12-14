@@ -321,62 +321,54 @@ const IndividualChat = () => {
 
         </div>
       </div>
-      <div className="bg-[#001529] p-4 sticky bottom-0">
-  <form className="flex items-center gap-1 px-4 lg:px-6" onSubmit={handleCreateMessage}>
-  
-    {showAttachmentOptions && (
-      <div className="absolute bottom-16 left-0 bg-slate-600 shadow-md rounded-lg p-2 w-48 flex flex-col gap-2 z-50">
-        <button
-          className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md"
-          onClick={() => handleOptionClick('Location')}
-        >
-          <FaLocationArrow size={16} className="text-blue-500" />
-          <span>Location</span>
-        </button>
-        <button
-          className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md"
-          onClick={() => handleOptionClick('Gallery')}
-        >
-          <FaImage size={16} className="text-green-500" />
-          <span>Gallery</span>
-        </button>
-      </div>
-    )}
-   <textarea
-            type="text"
-            value={messageBody}
-            onFocus={() => setIsMessageFocused(true)}
-            onBlur={() => setIsMessageFocused(false)}
-            onChange={(e) => setMessageBody(e.target.value)}
-            placeholder="Type your message..."
-            className={`bg-gray-700 text-white w-full p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? 'h-24' : 'h-16'} transition-all`}
-          ></textarea>
-           { /*<FaPaperclip
-      onClick={toggleAttachmentOptions}
-      className="cursor-pointer text-blue-500 hover:text-blue-700"
-      size={25}
-    />*/}
+      <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
+  <form
+    className="flex items-center gap-2 px-4 w-full max-w-3xl bg-gray-800 rounded-lg"
+    onSubmit={handleCreateMessage}
+  >
+    {/* Input for the message */}
+    <textarea
+      type="text"
+      value={messageBody}
+      onFocus={() => setIsMessageFocused(true)}
+      onBlur={() => setIsMessageFocused(false)}
+      onChange={(e) => setMessageBody(e.target.value)}
+      placeholder="Type your message..."
+      className={`bg-gray-700 text-white w-full p-3 rounded-lg shadow-md resize-none ${
+        isMessageFocused ? "h-24" : "h-16"
+      } transition-all`}
+    ></textarea>
+
+    {/* Emoji picker */}
     <button
       type="button"
       onClick={() => setShowPicker(!showPicker)}
-      className=" hover:bg-gray-400 text-white rounded-lg px-1 py-1"
+      className="hover:bg-gray-600 text-white rounded-lg p-2"
     >
       😀
     </button>
-    
+
     {showPicker && (
       <div className="absolute bottom-16 right-4 z-50">
-        <EmojiPicker onEmojiClick={handleEmojiClick} value={messageBody}  onChange={(e) => setMessageBody(e.target.value)} />
+        <EmojiPicker
+          onEmojiClick={handleEmojiClick}
+          value={messageBody}
+          onChange={(e) => setMessageBody(e.target.value)}
+        />
       </div>
     )}
+
+    {/* Send button */}
     <button
-          type='submit'
-          className=" bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 "
-        >
-          <FaLocationArrow />
-        </button>
+      type="submit"
+      className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 flex items-center justify-center"
+    >
+      <FaLocationArrow />
+    </button>
   </form>
 </div>
+
+
 
     </div>
   );
