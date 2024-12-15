@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage, FaUser,FaSignOutAlt } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage, FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 
@@ -273,7 +273,7 @@ const TestingPersonalChat = () => {
         </button>
       </header>
 
-      <div className="flex-grow overflow-y-auto p-4">
+      <div className="flex-grow overflow-y-auto p-4 max-h-[79vh]">
         {loading ? (
           /* From Uiverse.io by adamgiebl */ 
 <section className="dots-container">
@@ -359,15 +359,20 @@ const TestingPersonalChat = () => {
                       </div>
                     )}
 
-                    <span className="message-time text-[10px] text-black">
+                    <span className={`message-time text-[10px] text-black ${isCurrentUser ? "text-white" : "text-black"}`}>
                       {new Date(message.$createdAt).toLocaleDateString()}
                     </span>
 
-                    <div className="message-content">
+                    <div className="message-content " style={{
+    wordWrap: 'break-word',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    whiteSpace: 'pre-wrap',
+}}>
                       <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
                         {isCurrentUser ? `${user?.name} (You)` : message.senderName}
                       </p>
-                      <p className="p-3 font-bold">{message.PersonalMessage}</p>
+                      <p className="text-[16px]">{message.PersonalMessage}</p>
                       <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
                         {formatTime(new Date(message.timestamp))}
                       </small>
@@ -388,7 +393,7 @@ const TestingPersonalChat = () => {
           onBlur={() => setIsMessageFocused(false)}
           onChange={(e) => setMessageBody(e.target.value)}
           placeholder="Type your message..."
-          className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-24" : "h-16"} transition-all`}
+          className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
         ></textarea>
 
         <button
@@ -413,6 +418,43 @@ const TestingPersonalChat = () => {
           <FaLocationArrow size={20} />
         </button>
       </form>
+      {/* Navigation buttons */}
+      <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
+        <button
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#41dce4] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-th-large"></i>
+          <FaCamera className="text-[#41dce4]" size={17} />Camera
+        </button>
+      
+        <button
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#42A5F5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#42A5F5] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-comment-alt"></i>
+          <FaVideo className="text-[#42A5F5]" size={17} /> Video
+        </button>
+      
+        <button
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FB8C00] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#FB8C00] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-bell"></i>
+          <FaSearchLocation className="text-[#FFB300]" size={17} />Location
+        </button>
+      
+        <button
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AB47BC] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#AB47BC] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-user-friends"></i>
+          <FaFileAlt className="text-[#AB47BC]" size={17} />File
+        </button>
+      
+        <button
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#66BB6A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#66BB6A] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-cog"></i>
+          <FaDollarSign className="text-[#66BB6A]" size={18} />Money
+        </button>
+      </div>
     </div>
   );
 };
