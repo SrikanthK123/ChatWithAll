@@ -322,7 +322,7 @@ const IndividualChat = () => {
       </div>
       <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
   <form
-    className="flex items-center gap-2 px-4 w-full max-w-3xl  rounded-lg"
+    className="flex items-center gap-1 px-4 w-full max-w-3xl  rounded-lg"
     onSubmit={handleCreateMessage}
   >
     {/* Input for the message */}
@@ -375,7 +375,12 @@ const IndividualChat = () => {
     <i className="fas fa-th-large"></i>
     <FaCamera className="text-[#41dce4]" size={17} />Camera
   </button>
-
+<button
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#e46241] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-th-large"></i>
+          <FaImage className="text-[#e46241]" size={17} />Images
+        </button>
   <button
     className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#42A5F5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#42A5F5] h-9 rounded-md px-3"
   >

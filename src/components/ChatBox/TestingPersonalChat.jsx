@@ -286,16 +286,18 @@ const TestingPersonalChat = () => {
 
         ) : messages.length === 0 ? (
           <div>
-            <div className="flex justify-center items-center space-x-4 mt-10 mb-5">
-              <img
-                src="https://img.freepik.com/free-vector/hello-concept-illustration_114360-540.jpg?t=st=1732009114~exp=1732012714~hmac=8c14f1d801f8b0a563974ecd835b159fc799e8c76100a76b6b4f12b1130e00ce&w=740"
-                alt="Placeholder"
-                className="w-80 h-96 object-cover rounded-md"
-                style={{
-                  boxShadow: 'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px',
-                }}
-              />
-            </div>
+           <div className="flex justify-center items-center space-x-4 mt-10 mb-5">
+  <img
+    src="https://img.freepik.com/free-vector/hello-concept-illustration_114360-540.jpg?t=st=1732009114~exp=1732012714~hmac=8c14f1d801f8b0a563974ecd835b159fc799e8c76100a76b6b4f12b1130e00ce&w=740"
+    alt="Placeholder"
+    className="w-60 h-60 sm:w-80 sm:h-96 object-cover rounded-md"
+    style={{
+      boxShadow:
+        'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px',
+    }}
+  />
+</div>
+
           <div className="flex justify-center items-center flex-col space-y-4 p-4 rounded-lg ">
             
             <p className="text-xl">Let's Chat</p>
@@ -304,7 +306,7 @@ const TestingPersonalChat = () => {
             </p>
             <button
               onClick={handleHiButtonClick}
-              className="bg-[#007dfe] text-white p-2 px-4 rounded-lg mt-4 font-bold hover:bg-[#317ae9]" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
+              className="bg-[#007dfe] text-white p-2 px-4 rounded-2xl mt-4 font-bold hover:bg-[#317ae9] rounded-bl-none" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
             >
               Hello!
               
@@ -385,7 +387,7 @@ const TestingPersonalChat = () => {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-1 px-3 p-4 bg-[#001529] justify-center">
+      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-4 bg-[#001529] justify-center">
         <textarea
           type="text"
           value={messageBody}
@@ -403,7 +405,7 @@ const TestingPersonalChat = () => {
         >
           😀
         </button>
-        <FaImage  className="hover:text-blue-500 text-white m-2 cursor-pointer" size={20} onClick={ImageClick} />
+      
 
         {showPicker && (
           <div className="emoji-picker absolute bottom-16 right-4 z-50">
@@ -413,9 +415,9 @@ const TestingPersonalChat = () => {
 
         <button
           type="submit"
-          className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 p-2 rounded-full flex items-center justify-center"
+          className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
         >
-          <FaLocationArrow size={20} />
+          <FaLocationArrow size={18} />
         </button>
       </form>
       {/* Navigation buttons */}
@@ -425,6 +427,13 @@ const TestingPersonalChat = () => {
         >
           <i className="fas fa-th-large"></i>
           <FaCamera className="text-[#41dce4]" size={17} />Camera
+        </button>
+        
+        <button
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#e46241] h-9 rounded-md px-3"
+        >
+          <i className="fas fa-th-large"></i>
+          <FaImage className="text-[#e46241]" size={17} />Images
         </button>
       
         <button
