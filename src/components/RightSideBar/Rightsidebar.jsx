@@ -130,7 +130,7 @@ const Rightsidebar = () => {
         className="fixed p-2 m-2 bg-[#368ddd] text-white rounded-full md:hidden z-50"
         aria-label="Toggle Sidebar"
         style={{
-          right: `${position.x}px`,
+          right: `${position.x + 10}px`,
           top: `${position.y}px`,
           borderRadius: "50%",
           transition: "left 0.1s, top 0.1s",
