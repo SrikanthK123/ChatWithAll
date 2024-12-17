@@ -35,9 +35,18 @@ const Login = () => {
       return false;
     }
   }
+ const checkIfUserNameExists = async (name) => {
+  try {
+    const response = await account.listUsers([Query.equal('name', name)]);
+    console.log('Username query response:', response); // Debugging line
+    return response.total > 0;
+  } catch (error) {
+    console.error('Error checking username:', error);
+    return false;
+  }
+}
+  
 
-  // Login function
-  // Login function
 // Login function
 async function login(email, password) {
   try {
@@ -81,50 +90,58 @@ async function login(email, password) {
 
   
   // Register function
-  // Register function
-async function register(email, password, name) {
-  if (password.length < 8) {
-    setPasswordError('Password must be at least 8 characters long.');
-    return;
-  }
-
-  const userExists = await checkIfUserExists(email);
-  if (userExists) {
-    toast.error('A user with this email already exists.');
-    return;
-  }
-
-  try {
-    // Create user account
-    const user = await account.create(ID.unique(), email, password, name);
-
-    // Log in the user immediately after registration
-    await account.createEmailPasswordSession(email, password);
-
-    // Upload avatar if file is selected
-    let avatarURL = '';
-    if (avatar) {
-      const file = await storage.createFile('unique()', avatar); // Upload file to Appwrite
-      avatarURL = storage.getFilePreview(file.$id); // Generate avatar preview URL
+  async function register(email, password, name) {
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters long.');
+      return;
     }
-
-    // Optional: Save avatar URL to user preferences or database
-    await account.updatePrefs({ avatar: avatarURL }); // Ensure user is authenticated before this call
-
-    toast.success('Account created successfully! You can now log in.');
-    setCurrState('Login');
-    setEmail('');
-    setPassword('');
-    setName('');
-    setAvatar(null); // Clear avatar state
-  } catch (error) {
-    console.error('Registration error:', error);
-    toast.error('Registration failed. Please try again.');
+  
+    const userExists = await checkIfUserExists(email);
+    if (userExists) {
+      toast.error('A user with this email already exists.');
+      return;
+    }
+    const userNameExists = await checkIfUserNameExists(name);
+    if (userNameExists) {
+      toast.error('A user with this name already exists.');
+      return;
+    }
+  
+    try {
+      // Ensure no active session exists before creating a new user
+      await account.deleteSession('current').catch(() => {});
+  
+      // Create user account
+      const user = await account.create(ID.unique(), email, password, name);
+  
+      // Log in the user immediately after registration
+      const session = await account.createEmailPasswordSession(email, password);
+      
+      // Upload avatar if file is selected
+      let avatarURL = '';
+      if (avatar) {
+        const file = await storage.createFile('unique()', avatar); // Upload file to Appwrite
+        avatarURL = storage.getFilePreview(file.$id); // Generate avatar preview URL
+      }
+  
+      // Optional: Save avatar URL to user preferences or database
+      await account.updatePrefs({ avatar: avatarURL });
+  
+      // Show success message and navigate to login screen
+      toast.success('Account created successfully! You can now log in.');
+      
+      // Reset the form and state
+      setCurrState('Login');
+      setEmail('');
+      setPassword('');
+      setName('');
+      setAvatar(null); // Clear avatar state
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    }
   }
-}
-
-
-  // Logout function
+   // Logout function
   async function logout() {
     try {
       await account.deleteSession('current');
