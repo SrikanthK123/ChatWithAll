@@ -22,7 +22,6 @@ const TestingPersonalChat = () => {
   const [selectedMenu, setSelectedMenu] = useState(null); // Track which message is selected for options
   const [isMessageFocused, setIsMessageFocused] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null); // For file upload
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
 
   // Fetch current logged-in user
@@ -92,109 +91,86 @@ const TestingPersonalChat = () => {
   // Real-time updates
   useEffect(() => {
     if (user && username) {
+      getMessages(); // This fetches messages as soon as the user loads
       const unsubscribe = client.subscribe(
         `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
         (response) => {
           const newMessage = response.payload;
-  
-          setMessages((prevMessages) => {
-            // Avoid duplicates by checking for an existing message with the same ID
-            if (prevMessages.some((msg) => msg.$id === newMessage.$id)) {
-              return prevMessages;
-            }
-            return [...prevMessages, newMessage];
-          });
+          if (
+            (newMessage.senderName === user.name && newMessage.receiverName === username) ||
+            (newMessage.senderName === username && newMessage.receiverName === user.name)
+          ) {
+            setMessages((prev) => {
+              const existingMessageIndex = prev.findIndex((msg) => msg.$id === newMessage.$id);
+              if (existingMessageIndex !== -1) {
+                const updatedMessages = [...prev];
+                updatedMessages[existingMessageIndex] = newMessage;
+                return updatedMessages;
+              } else {
+                return [...prev, newMessage];
+              }
+            });
+          }
         }
       );
       return () => unsubscribe();
     }
   }, [user, username]);
-  
 
-// Handle message submission
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!messageBody.trim() && !selectedFile) return;
-  if (isSubmitting) return;
+  // Handle message submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!messageBody.trim() && !selectedFile) return;
 
-  setIsSubmitting(true);
+    const newMessage = {
+      senderName: user.name,
+      receiverName: username,
+      timestamp: new Date().toISOString(),
+      PersonalMessage: [messageBody.trim()],
+      isRead: false,
+    };
+    
 
-  const newMessage = {
-    senderName: user.name,
-    receiverName: username,
-    timestamp: new Date().toISOString(),
-    PersonalMessage: [messageBody.trim()],
-    isRead: false,
-  };
-
-  try {
     if (editingMessageId) {
-      await databases.updateDocument(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
-        editingMessageId,
-        { PersonalMessage: [messageBody.trim()] }
-      );
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.$id === editingMessageId
-            ? { ...msg, PersonalMessage: [messageBody.trim()] }
-            : msg
-        )
-      );
-      setEditingMessageId(null);
-    } else {
-      const createdMessage = await databases.createDocument(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
-        ID.unique(),
-        newMessage
-      );
-      setMessages((prevMessages) => [...prevMessages, createdMessage]);
-    }
-  } catch (error) {
-    console.error("Error sending message:", error);
-  } finally {
-    setIsSubmitting(false);
-    setMessageBody("");
-  }
-};
-useEffect(() => {
-  if (user && username) {
-    const unsubscribe = client.subscribe(
-      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-      (response) => {
-        const updatedMessage = response.payload;
+      try {
+        // Update existing message
+        await databases.updateDocument(
+          import.meta.env.VITE_DATABASE_ID,
+          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+          editingMessageId,
+          { PersonalMessage: [messageBody.trim()] }
+        );
 
-        if (response.events.includes("databases.*.collections.*.documents.*.create")) {
-          // Handle new messages
-          setMessages((prevMessages) => {
-            if (prevMessages.some((msg) => msg.$id === updatedMessage.$id)) {
-              return prevMessages;
-            }
-            return [...prevMessages, updatedMessage];
-          });
-        } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-          // Handle updated messages
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.$id === updatedMessage.$id ? updatedMessage : msg
-            )
-          );
-        } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-          // Handle deleted messages
-          const deletedMessageId = updatedMessage.$id;
-          setMessages((prevMessages) =>
-            prevMessages.filter((msg) => msg.$id !== deletedMessageId)
-          );
-        }
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.$id === editingMessageId
+              ? { ...msg, PersonalMessage: [messageBody.trim()] }
+              : msg
+          )
+        );
+        setEditingMessageId(null); // Reset editing state
+      } catch (error) {
+        console.error("Error updating message:", error);
       }
-    );
-    return () => unsubscribe();
-  }
-}, [user, username]);
+    } else {
+      try {
+        // Save the new message to the database
+        const createdMessage = await databases.createDocument(
+          import.meta.env.VITE_DATABASE_ID,
+          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+          ID.unique(),
+          newMessage
+        );
+        setMessages((prev) => [...prev, createdMessage]); // Add the message to the state after creation
+        
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
 
-
+    setMessageBody(""); // Reset the input field
+    
+  };
   useEffect(() => {
     console.log("All Messages", messages);
   })
@@ -260,71 +236,31 @@ useEffect(() => {
       PersonalMessage: ["Hello!"],
       isRead: false,
     };
-  
+
     try {
-      // Create the "Hello!" message directly without handleSubmit
+      // Use handleSubmit directly to submit the message
+      await handleSubmit({
+        preventDefault: () => {}, // Prevent default form behavior
+      });
+
+      // Create the "Hi" message
       const createdMessage = await databases.createDocument(
         import.meta.env.VITE_DATABASE_ID,
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
         ID.unique(),
         newMessage
       );
-  
-      // Add the message to the state
-      setMessages((prev) => [...prev, createdMessage]);
+
+      setMessages((prev) => [...prev, createdMessage]); // Add the "Hi" message to the state after creation
     } catch (error) {
-      console.error("Error sending 'Hello!' message:", error);
+      console.error("Error sending 'Hi' message:", error);
     }
   };
-  
    //Image Upload Testing
    const ImageClick = () => {
     console.log("Image clicked");
     toast.success("Oops! Coming Soon");
   };
-  useEffect(() => {
-    // Fetch initial messages
-    const fetchMessages = async () => {
-      const response = await client.listDocuments(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT
-      );
-      setMessages(response.documents);
-    };
-  
-    fetchMessages();
-  
-    // Real-time subscription for updates
-    const unsubscribe = client.subscribe(
-      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-      (response) => {
-        const newMessage = response.payload;
-  
-        setMessages((prevMessages) => {
-          const isDuplicate = prevMessages.some((msg) => msg.$id === newMessage.$id);
-  
-          if (response.events.includes("databases.*.collections.*.documents.*.create") && !isDuplicate) {
-            return [...prevMessages, newMessage];
-          }
-  
-          if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-            return prevMessages.map((msg) =>
-              msg.$id === newMessage.$id ? newMessage : msg
-            );
-          }
-  
-          if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-            return prevMessages.filter((msg) => msg.$id !== newMessage.$id);
-          }
-  
-          return prevMessages;
-        });
-      }
-    );
-  
-    return () => unsubscribe();
-  }, []);
-  
   
   
 
@@ -372,7 +308,7 @@ useEffect(() => {
               onClick={handleHiButtonClick}
               className="bg-[#007dfe] text-white p-2 px-4 rounded-2xl mt-4 font-bold hover:bg-[#317ae9] rounded-bl-none" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
             >
-              Hello!!
+              Hello!
               
             </button>
           </div>
@@ -380,77 +316,73 @@ useEffect(() => {
         ) : (
           <div className="messages-container space-y-4">
             {messages.map((message) => {
-  const isCurrentUser = message.senderName === user?.name;
-  const uniqueKey = `${message.$id}-${message.timestamp}`; // Combine $id and timestamp for uniqueness
-  
-  return (
-    <div
-      key={uniqueKey}  // Now the key is guaranteed to be unique
-      className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
-    >
-      <div
-        className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
-          isCurrentUser
-            ? "bg-blue-500 text-white self-end rounded-tr-none"
-            : "bg-gray-100 text-black self-start rounded-tl-none"
-        } relative`}
-      >
-        {isCurrentUser && (
-          <button
-            onClick={() => toggleMenu(message.$id)}
-            className="absolute top-1 right-1 text-white hover:text-black"
-          >
-            <FaEllipsisV size={12} />
-          </button>
-        )}
+              const isCurrentUser = message.senderName === user?.name;
+              return (
+                <div
+                  key={message.$id}
+                  className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
+                >
+                 
+                  <div
+                    className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
+                      isCurrentUser
+                        ? "bg-blue-500 text-white self-end rounded-tr-none"
+                        : "bg-gray-100 text-black self-start rounded-tl-none"
+                    } relative`}
+                  >
+                    {isCurrentUser && (
+                      <button
+                        onClick={() => toggleMenu(message.$id)}
+                        className="absolute top-1 right-1 text-white hover:text-black"
+                      >
+                        <FaEllipsisV size={12} />
+                      </button>
+                    )}
 
-        {selectedMenu === message.$id && (
-          <div
-            className="message-options absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30"
-            style={{ minWidth: "120px" }}
-          >
-            <button
-              onClick={() => deleteMessage(message.$id)}
-              className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
-            >
-              <FaTrash size={12} />
-              <span>Delete</span>
-            </button>
-            <button
-              onClick={() => editMessage(message.$id, message.PersonalMessage[0])}
-              className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
-            >
-              <FaImage size={12} />
-              <span>Edit</span>
-            </button>
-          </div>
-        )}
+                    {selectedMenu === message.$id && (
+                      <div
+                        className="message-options absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30"
+                        style={{ minWidth: "120px" }}
+                      >
+                        <button
+                          onClick={() => deleteMessage(message.$id)}
+                          className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+                        >
+                          <FaTrash size={12} />
+                          <span>Delete</span>
+                        </button>
+                        <button
+                          onClick={() => editMessage(message.$id, message.PersonalMessage[0])}
+                          className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+                        >
+                          <FaImage size={12} />
+                          <span>Edit</span>
+                        </button>
+                      </div>
+                    )}
 
-        <span
-          className={`message-time text-[10px] text-black ${isCurrentUser ? "text-white" : "text-black"}`}
-        >
-          {new Date(message.$createdAt).toLocaleDateString()}
-        </span>
+                    <span className={`message-time text-[10px] text-black ${isCurrentUser ? "text-white" : "text-black"}`}>
+                      {new Date(message.$createdAt).toLocaleDateString()}
+                    </span>
 
-        <div className="message-content" style={{
-          wordWrap: 'break-word',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word',
-          whiteSpace: 'pre-wrap',
-        }}>
-          <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
-            {isCurrentUser ? `${user?.name} (You)` : message.senderName}
-          </p>
-          <p className="text-[16px]">{message.PersonalMessage}</p>
-          <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
-            {formatTime(new Date(message.timestamp))}
-          </small>
-        </div>
-      </div>
-    </div>
-  );
-})}
-
+                    <div className="message-content " style={{
+    wordWrap: 'break-word',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    whiteSpace: 'pre-wrap',
+}}>
+                      <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
+                        {isCurrentUser ? `${user?.name} (You)` : message.senderName}
+                      </p>
+                      <p className="text-[16px]">{message.PersonalMessage}</p>
+                      <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
+                        {formatTime(new Date(message.timestamp))}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -481,14 +413,12 @@ useEffect(() => {
           </div>
         )}
 
-<button
-  type="submit"
-  className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
-  disabled={isSubmitting}
->
-  <FaLocationArrow size={18} />
-</button>
-
+        <button
+          type="submit"
+          className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
+        >
+          <FaLocationArrow size={18} />
+        </button>
       </form>
       {/* Navigation buttons */}
       <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
@@ -538,4 +468,4 @@ useEffect(() => {
   );
 };
 
-export default TestingPersonalChat; 
+export default TestingPersonalChat;  
