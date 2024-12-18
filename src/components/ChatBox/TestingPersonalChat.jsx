@@ -89,33 +89,7 @@ const TestingPersonalChat = () => {
   }, [user]);
 
   // Real-time updates
-  useEffect(() => {
-    if (user && username) {
-      getMessages(); // This fetches messages as soon as the user loads
-      const unsubscribe = client.subscribe(
-        `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-        (response) => {
-          const newMessage = response.payload;
-          if (
-            (newMessage.senderName === user.name && newMessage.receiverName === username) ||
-            (newMessage.senderName === username && newMessage.receiverName === user.name)
-          ) {
-            setMessages((prev) => {
-              const existingMessageIndex = prev.findIndex((msg) => msg.$id === newMessage.$id);
-              if (existingMessageIndex !== -1) {
-                const updatedMessages = [...prev];
-                updatedMessages[existingMessageIndex] = newMessage;
-                return updatedMessages;
-              } else {
-                return [...prev, newMessage];
-              }
-            });
-          }
-        }
-      );
-      return () => unsubscribe();
-    }
-  }, [user, username]);
+ 
 
   // Handle message submission
   const handleSubmit = async (e) => {
@@ -261,6 +235,8 @@ const TestingPersonalChat = () => {
     console.log("Image clicked");
     toast.success("Oops! Coming Soon");
   };
+  
+
   
   
 
