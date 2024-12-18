@@ -49,7 +49,7 @@ const TestingPersonalChat = () => {
 
   // Fetch messages for the current conversation
   const getMessages = async () => {
-    //setLoading(true);
+    setLoading(true);
     try {
       const messagesForSender = await databases.listDocuments(
         import.meta.env.VITE_DATABASE_ID,
@@ -82,36 +82,52 @@ const TestingPersonalChat = () => {
     }
   };
 
-  
+  useEffect(() => {
+    if (user) {
+      getMessages();
+    }
+  }, [user]);
 
   // Real-time updates
   useEffect(() => {
     if (user && username) {
       getMessages(); // This fetches messages as soon as the user loads
+  
       const unsubscribe = client.subscribe(
         `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
         (response) => {
-          const newMessage = response.payload;
-          if (
-            (newMessage.senderName === user.name && newMessage.receiverName === username) ||
-            (newMessage.senderName === username && newMessage.receiverName === user.name)
-          ) {
-            setMessages((prev) => {
-              const existingMessageIndex = prev.findIndex((msg) => msg.$id === newMessage.$id);
-              if (existingMessageIndex !== -1) {
-                const updatedMessages = [...prev];
-                updatedMessages[existingMessageIndex] = newMessage;
-                return updatedMessages;
-              } else {
-                return [...prev, newMessage];
-              }
-            });
+          const event = response.events[0];
+  
+          if (event.includes("delete")) {
+            // Handle message deletion
+            const deletedMessageId = response.payload.$id;
+            setMessages((prev) => prev.filter((msg) => msg.$id !== deletedMessageId));
+          } else if (event.includes("create") || event.includes("update")) {
+            // Handle message creation or update
+            const newMessage = response.payload;
+            if (
+              (newMessage.senderName === user.name && newMessage.receiverName === username) ||
+              (newMessage.senderName === username && newMessage.receiverName === user.name)
+            ) {
+              setMessages((prev) => {
+                const existingMessageIndex = prev.findIndex((msg) => msg.$id === newMessage.$id);
+                if (existingMessageIndex !== -1) {
+                  const updatedMessages = [...prev];
+                  updatedMessages[existingMessageIndex] = newMessage;
+                  return updatedMessages;
+                } else {
+                  return [...prev, newMessage];
+                }
+              });
+            }
           }
         }
       );
+  
       return () => unsubscribe();
     }
   }, [user, username]);
+  
 
   // Handle message submission
   const handleSubmit = async (e) => {
@@ -416,42 +432,42 @@ const TestingPersonalChat = () => {
       {/* Navigation buttons */}
       <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
         <button
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#41dce4] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#41dce4] h-9 rounded-md px-3"
         >
           <i className="fas fa-th-large"></i>
           <FaCamera className="text-[#41dce4]" size={17} />Camera
         </button>
         
         <button
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#e46241] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#e46241] h-9 rounded-md px-3"
         >
           <i className="fas fa-th-large"></i>
           <FaImage className="text-[#e46241]" size={17} />Images
         </button>
       
         <button
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#42A5F5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#42A5F5] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#42A5F5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#42A5F5] h-9 rounded-md px-3"
         >
           <i className="fas fa-comment-alt"></i>
           <FaVideo className="text-[#42A5F5]" size={17} /> Video
         </button>
       
         <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FB8C00] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#FB8C00] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FB8C00] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#FB8C00] h-9 rounded-md px-3"
         >
           <i className="fas fa-bell"></i>
           <FaSearchLocation className="text-[#FFB300]" size={17} />Location
         </button>
       
         <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AB47BC] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#AB47BC] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AB47BC] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#AB47BC] h-9 rounded-md px-3"
         >
           <i className="fas fa-user-friends"></i>
           <FaFileAlt className="text-[#AB47BC]" size={17} />File
         </button>
       
         <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2  text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#66BB6A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#66BB6A] h-9 rounded-md px-3"
+          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#66BB6A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#66BB6A] h-9 rounded-md px-3"
         >
           <i className="fas fa-cog"></i>
           <FaDollarSign className="text-[#66BB6A]" size={18} />Money
