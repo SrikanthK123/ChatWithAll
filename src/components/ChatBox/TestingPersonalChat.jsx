@@ -305,7 +305,7 @@ const TestingPersonalChat = () => {
               onClick={handleHiButtonClick}
               className="bg-[#007dfe] text-white p-2 px-4 rounded-2xl mt-4 font-bold hover:bg-[#317ae9] rounded-bl-none" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
             >
-              Hello!
+              Hello!!
               
             </button>
           </div>

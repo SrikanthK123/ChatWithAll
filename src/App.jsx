@@ -14,6 +14,7 @@ import TestingPersonalChat from './components/ChatBox/TestingPersonalChat';
 import { useUser } from './UseContext';
 import FinalTest from './components/ChatBox/FinalTest';
 import Leftsidebar from './components/LeftSideBar/Leftsidebar';
+import BucketTest from './components/BucketTest';
 
 function App() {
   const user = useUser();
@@ -30,6 +31,7 @@ function App() {
           <Route path="/chat/:userId/:username" element={<TestingPersonalChat />} />
           {/*<Route path="/chat/:userId/:username" element={<FinalTest />} />*/}
         </Route>
+        <Route path='/BucketTest' element={<BucketTest/>} />
       </Routes>
     </Router>
   );

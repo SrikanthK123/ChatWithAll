@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaImage, FaTrash, FaEllipsisV ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile, FaSearchLocation, FaAudible, FaAudioDescription, FaCommentDots, FaMicrophone, FaCog, FaVideo, FaDollarSign } from 'react-icons/fa'; 
 import { useUser } from '../../UseContext';
-import { account, client, databases } from "../../lib/appwrite";
+import { account, client, databases,storage } from "../../lib/appwrite";
 import { AlluseUsers } from '../../hook/AllUserData';
 import { ID, Query } from 'appwrite';
 import EmojiPicker from 'emoji-picker-react';
@@ -22,6 +22,8 @@ const IndividualChat = () => {
   const [latestUsername, setLatestUsername] = useState('');
   const [latestMessage, setLatestMessage] = useState('');
  
+  
+  
   const formatTime = (date) => {
     let hours = date.getHours();
     const minutes = date.getMinutes();
@@ -41,6 +43,7 @@ const IndividualChat = () => {
     console.log(`${option} clicked!`);
     // Implement specific functionality for each option here
   };  
+
 
   useEffect(() => {
     const fetchUserData = async () => {
