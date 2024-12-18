@@ -114,7 +114,6 @@ const TestingPersonalChat = () => {
         }
       );
       return () => unsubscribe();
-      
     }
   }, [user, username]);
 
@@ -237,33 +236,28 @@ const TestingPersonalChat = () => {
       PersonalMessage: ["Hello!"],
       isRead: false,
     };
-
+  
     try {
-      // Use handleSubmit directly to submit the message
-      await handleSubmit({
-        preventDefault: () => {}, // Prevent default form behavior
-      });
-
-      // Create the "Hi" message
+      // Create the "Hello!" message directly without handleSubmit
       const createdMessage = await databases.createDocument(
         import.meta.env.VITE_DATABASE_ID,
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
         ID.unique(),
         newMessage
       );
-
-      setMessages((prev) => [...prev, createdMessage]); // Add the "Hi" message to the state after creation
+  
+      // Add the message to the state
+      setMessages((prev) => [...prev, createdMessage]);
     } catch (error) {
-      console.error("Error sending 'Hi' message:", error);
+      console.error("Error sending 'Hello!' message:", error);
     }
   };
+  
    //Image Upload Testing
    const ImageClick = () => {
     console.log("Image clicked");
     toast.success("Oops! Coming Soon");
   };
-  
-
   
   
 
@@ -471,4 +465,4 @@ const TestingPersonalChat = () => {
   );
 };
 
-export default TestingPersonalChat;  
+export default TestingPersonalChat; 
