@@ -90,26 +90,26 @@ const TestingPersonalChat = () => {
   }, [user]);
 
   // Real-time updates
- // Real-time updates
-useEffect(() => {
-  if (user && username) {
-    const unsubscribe = client.subscribe(
-      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-      (response) => {
-        const newMessage = response.payload;
-
-        setMessages((prevMessages) => {
-          // Check if the message already exists in the state
-          if (prevMessages.some((msg) => msg.$id === newMessage.$id)) {
-            return prevMessages; // No need to add a duplicate
-          }
-          return [...prevMessages, newMessage];
-        });
-      }
-    );
-    return () => unsubscribe();
-  }
-}, [user, username]);
+  useEffect(() => {
+    if (user && username) {
+      const unsubscribe = client.subscribe(
+        `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+        (response) => {
+          const newMessage = response.payload;
+  
+          setMessages((prevMessages) => {
+            // Avoid duplicates by checking for an existing message with the same ID
+            if (prevMessages.some((msg) => msg.$id === newMessage.$id)) {
+              return prevMessages;
+            }
+            return [...prevMessages, newMessage];
+          });
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [user, username]);
+  
 
 // Handle message submission
 const handleSubmit = async (e) => {
@@ -159,6 +159,41 @@ const handleSubmit = async (e) => {
     setMessageBody("");
   }
 };
+useEffect(() => {
+  if (user && username) {
+    const unsubscribe = client.subscribe(
+      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+      (response) => {
+        const updatedMessage = response.payload;
+
+        if (response.events.includes("databases.*.collections.*.documents.*.create")) {
+          // Handle new messages
+          setMessages((prevMessages) => {
+            if (prevMessages.some((msg) => msg.$id === updatedMessage.$id)) {
+              return prevMessages;
+            }
+            return [...prevMessages, updatedMessage];
+          });
+        } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
+          // Handle updated messages
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.$id === updatedMessage.$id ? updatedMessage : msg
+            )
+          );
+        } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
+          // Handle deleted messages
+          const deletedMessageId = updatedMessage.$id;
+          setMessages((prevMessages) =>
+            prevMessages.filter((msg) => msg.$id !== deletedMessageId)
+          );
+        }
+      }
+    );
+    return () => unsubscribe();
+  }
+}, [user, username]);
+
 
   useEffect(() => {
     console.log("All Messages", messages);
@@ -294,7 +329,7 @@ const handleSubmit = async (e) => {
               onClick={handleHiButtonClick}
               className="bg-[#007dfe] text-white p-2 px-4 rounded-2xl mt-4 font-bold hover:bg-[#317ae9] rounded-bl-none" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
             >
-              Hello!!
+              Hello!
               
             </button>
           </div>
