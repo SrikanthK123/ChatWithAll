@@ -90,78 +90,76 @@ const TestingPersonalChat = () => {
   }, [user]);
 
   // Real-time updates
-  useEffect(() => {
-    if (user && username) {
-      getMessages(); // Fetch messages when user and username are loaded
-      const unsubscribe = client.subscribe(
-        `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-        (response) => {
-          const newMessage = response.payload;
-          // Prevent adding duplicate messages
-          setMessages((prev) => {
-            if (prev.some((msg) => msg.$id === newMessage.$id)) {
-              return prev; // Don't add duplicate message
-            }
-            return [...prev, newMessage];
-          });
-        }
-      );
-      return () => unsubscribe();
-    }
-  }, [user, username]);
-  
+ // Real-time updates
+useEffect(() => {
+  if (user && username) {
+    const unsubscribe = client.subscribe(
+      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+      (response) => {
+        const newMessage = response.payload;
 
-  // Handle message submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!messageBody.trim() && !selectedFile) return;
-    if (isSubmitting) return; // Prevent multiple submissions
-  
-    setIsSubmitting(true); // Set isSubmitting to true while sending the message
-  
-    const newMessage = {
-      senderName: user.name,
-      receiverName: username,
-      timestamp: new Date().toISOString(),
-      PersonalMessage: [messageBody.trim()],
-      isRead: false,
-    };
-  
-    try {
-      if (editingMessageId) {
-        // Update existing message
-        await databases.updateDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
-          editingMessageId,
-          { PersonalMessage: [messageBody.trim()] }
-        );
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.$id === editingMessageId
-              ? { ...msg, PersonalMessage: [messageBody.trim()] }
-              : msg
-          )
-        );
-        setEditingMessageId(null);
-      } else {
-        // Create a new message
-        const createdMessage = await databases.createDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
-          ID.unique(),
-          newMessage
-        );
-        setMessages((prev) => [...prev, createdMessage]); // Add the message to the state
+        setMessages((prevMessages) => {
+          // Check if the message already exists in the state
+          if (prevMessages.some((msg) => msg.$id === newMessage.$id)) {
+            return prevMessages; // No need to add a duplicate
+          }
+          return [...prevMessages, newMessage];
+        });
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    } finally {
-      setIsSubmitting(false); // Reset isSubmitting to false after message is sent
-    }
-  
-    setMessageBody(""); // Reset the input field
+    );
+    return () => unsubscribe();
+  }
+}, [user, username]);
+
+// Handle message submission
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!messageBody.trim() && !selectedFile) return;
+  if (isSubmitting) return;
+
+  setIsSubmitting(true);
+
+  const newMessage = {
+    senderName: user.name,
+    receiverName: username,
+    timestamp: new Date().toISOString(),
+    PersonalMessage: [messageBody.trim()],
+    isRead: false,
   };
+
+  try {
+    if (editingMessageId) {
+      await databases.updateDocument(
+        import.meta.env.VITE_DATABASE_ID,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        editingMessageId,
+        { PersonalMessage: [messageBody.trim()] }
+      );
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.$id === editingMessageId
+            ? { ...msg, PersonalMessage: [messageBody.trim()] }
+            : msg
+        )
+      );
+      setEditingMessageId(null);
+    } else {
+      const createdMessage = await databases.createDocument(
+        import.meta.env.VITE_DATABASE_ID,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        ID.unique(),
+        newMessage
+      );
+      setMessages((prevMessages) => [...prevMessages, createdMessage]);
+    }
+  } catch (error) {
+    console.error("Error sending message:", error);
+  } finally {
+    setIsSubmitting(false);
+    setMessageBody("");
+  }
+};
+
   useEffect(() => {
     console.log("All Messages", messages);
   })
