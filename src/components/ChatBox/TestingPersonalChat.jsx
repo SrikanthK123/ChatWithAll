@@ -282,6 +282,49 @@ useEffect(() => {
     console.log("Image clicked");
     toast.success("Oops! Coming Soon");
   };
+  useEffect(() => {
+    // Fetch initial messages
+    const fetchMessages = async () => {
+      const response = await client.listDocuments(
+        import.meta.env.VITE_DATABASE_ID,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT
+      );
+      setMessages(response.documents);
+    };
+  
+    fetchMessages();
+  
+    // Real-time subscription for updates
+    const unsubscribe = client.subscribe(
+      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+      (response) => {
+        const newMessage = response.payload;
+  
+        setMessages((prevMessages) => {
+          const isDuplicate = prevMessages.some((msg) => msg.$id === newMessage.$id);
+  
+          if (response.events.includes("databases.*.collections.*.documents.*.create") && !isDuplicate) {
+            return [...prevMessages, newMessage];
+          }
+  
+          if (response.events.includes("databases.*.collections.*.documents.*.update")) {
+            return prevMessages.map((msg) =>
+              msg.$id === newMessage.$id ? newMessage : msg
+            );
+          }
+  
+          if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
+            return prevMessages.filter((msg) => msg.$id !== newMessage.$id);
+          }
+  
+          return prevMessages;
+        });
+      }
+    );
+  
+    return () => unsubscribe();
+  }, []);
+  
   
   
 
@@ -329,7 +372,7 @@ useEffect(() => {
               onClick={handleHiButtonClick}
               className="bg-[#007dfe] text-white p-2 px-4 rounded-2xl mt-4 font-bold hover:bg-[#317ae9] rounded-bl-none" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
             >
-              Hello!
+              Hello!!
               
             </button>
           </div>
