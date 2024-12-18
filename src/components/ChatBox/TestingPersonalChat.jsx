@@ -49,7 +49,7 @@ const TestingPersonalChat = () => {
 
   // Fetch messages for the current conversation
   const getMessages = async () => {
-    setLoading(true);
+    //setLoading(true);
     try {
       const messagesForSender = await databases.listDocuments(
         import.meta.env.VITE_DATABASE_ID,
@@ -82,11 +82,7 @@ const TestingPersonalChat = () => {
     }
   };
 
-  useEffect(() => {
-    if (user && username) {
-      getMessages();
-    }
-  }, [user]);
+  
 
   // Real-time updates
   useEffect(() => {
