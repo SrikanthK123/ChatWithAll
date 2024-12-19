@@ -99,9 +99,22 @@ const TestingPersonalChat = () => {
           const newMessage = response.payload;
   
           setMessages((prev) => {
-            // Check for duplicate messages using a more robust comparison
+            // Check if the message already exists
             const exists = prev.some((msg) => msg.$id === newMessage.$id);
-            if (exists) return prev; // Prevent duplicates
+  
+            if (response.event === 'delete') {
+              // Handle deletion
+              return prev.filter((msg) => msg.$id !== newMessage.$id);
+            }
+  
+            if (exists) {
+              // Handle update
+              return prev.map((msg) => 
+                msg.$id === newMessage.$id ? newMessage : msg
+              );
+            }
+  
+            // Handle new message
             return [...prev, newMessage];
           });
         }
@@ -110,6 +123,7 @@ const TestingPersonalChat = () => {
       return () => unsubscribe();
     }
   }, [user, username]);
+  
   
   // New message submission
   const handleSubmit = async (e) => {
@@ -175,25 +189,18 @@ const TestingPersonalChat = () => {
   // Delete a message
   const deleteMessage = async (messageId) => {
     try {
-      // Delete the message from the database
       await databases.deleteDocument(
         import.meta.env.VITE_DATABASE_ID,
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
         messageId
       );
   
-      // Immediately update the UI by removing the message from the state
-      setMessages((prevMessages) => prevMessages.filter((msg) => msg.$id !== messageId));
-  
-      // Fetch the messages again to ensure the UI is consistent with the database state
-      getMessages();
-  
-      // Close the menu after deleting
-      setSelectedMenu(null);
+      setMessages((prev) => prev.filter((msg) => msg.$id !== messageId));
     } catch (error) {
       console.error("Error deleting message:", error);
     }
   };
+  
   
   
 
