@@ -88,7 +88,7 @@ const TestingPersonalChat = () => {
     }
   }, [user]);
 
-  // Real-time updates
+  //Real Time Messages
   useEffect(() => {
     if (user && username) {
       getMessages();
@@ -99,6 +99,7 @@ const TestingPersonalChat = () => {
           const newMessage = response.payload;
   
           setMessages((prev) => {
+            // Check for duplicate messages using a more robust comparison
             const exists = prev.some((msg) => msg.$id === newMessage.$id);
             if (exists) return prev; // Prevent duplicates
             return [...prev, newMessage];
@@ -110,9 +111,7 @@ const TestingPersonalChat = () => {
     }
   }, [user, username]);
   
-  
-
-  // Handle message submission
+  // New message submission
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -153,7 +152,12 @@ const TestingPersonalChat = () => {
           newMessage
         );
   
-        setMessages((prev) => [...prev, createdMessage]);
+        setMessages((prev) => {
+          // Ensure the message isn't already in the list
+          const exists = prev.some((msg) => msg.$id === createdMessage.$id);
+          if (exists) return prev; // Prevent duplicates
+          return [...prev, createdMessage];
+        });
       }
   
       setMessageBody(""); // Clear the input field
@@ -161,6 +165,8 @@ const TestingPersonalChat = () => {
       console.error("Error sending message:", error);
     }
   };
+  
+  
   
   useEffect(() => {
     console.log("All Messages", messages);
@@ -456,4 +462,4 @@ const TestingPersonalChat = () => {
   );
 };
 
-export default TestingPersonalChat; 
+export default TestingPersonalChat;
