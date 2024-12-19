@@ -218,3 +218,17 @@ background-position: left, right;
     box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
   }
 }
+/* Hide scrollbar in Chrome, Edge, and Safari */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* For Firefox */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Hides scrollbar in Firefox */
+}
+
+/* For Internet Explorer */
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* Hides scrollbar in IE 10+ */
+}

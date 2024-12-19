@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { useUser } from '../../UseContext';
 import { LoginUsers } from '../../hook/LoginUsers';
 import { Query } from 'appwrite';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Leftsidebar = () => {
   const navigate = useNavigate();
@@ -120,93 +120,91 @@ const Leftsidebar = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-screen w-64 overflow-y-auto z-40 bg-slate-800 text-white shadow-lg transition-transform duration-300 ease-in-out transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`} // Always visible on larger screens
-      >
-        <div className="flex items-center justify-between p-4 mt-12">
-          <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'monospace' }}>
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/8377/8377294.png"
-              className="w-8 h-8"
-              alt="Sidebar Icon"
-            />
-            Chit-Chat
-          </h3>
-        </div>
+  className={`fixed top-0 left-0 h-screen w-64 z-40 bg-slate-800 text-white shadow-lg transition-transform duration-300 ease-in-out transform ${
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  } md:translate-x-0`} // Always visible on larger screens
+>
+  <div className="flex items-center justify-between p-4 mt-12">
+    <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'monospace' }}>
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/8377/8377294.png"
+        className="w-8 h-8"
+        alt="Sidebar Icon"
+      />
+      Chit-Chat
+    </h3>
+  </div>
 
-        <div className="p-2">
-          {/* User Info Display */}
-          {user ? (
-            <div className="mb-6">
-              <div className="text-xs text-white flex p-1 pl-3 bg-[#303749a5]">
-                <FaEnvelope size={20} className='mt-2 text-[#0066ff]' /> 
-                <span className="p-2 text-sm">{user.email}</span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-white text-sm">Loading user...</p>
-          )}
-
-           {/* Search Bar */}
-           <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-gray-400 focus:outline-none"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              list="userList" // Link input to datalist
-            />
-            <datalist id="userList">
-              {filteredUsers?.map((userItem) => (
-                <option key={userItem.$id} value={userItem.username} />
-              ))}
-            </datalist>
-          </div>
-
-          <h3 className="text-lg font-bold mt-2">Group Members</h3>
-          <hr />
-          <ul className="space-y-3 p-1">
-            {userData && userData.length > 0 ? (
-              // Include the current user at the top of the list
-              <>
-                {/* Include current user */}
-                {user && (
-                  
-  <SidebarItem
-    key={user.$id}
-    userId={user.$id}
-    label={`${user.name} (You)` }
-   // personalMessage="Me"
-    imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user
-    style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user
-  />
-)}
-
-
-                {/* Map through other users */}
-                {Array.from(new Map(userData.map((user) => [user.username, user]))).map(
-                  ([_, user]) => (
-                    <SidebarItem
-                      key={user.$id}
-                      userId={user.$id}
-                      label={user.username}
-                      personalMessage="Online"
-                      imageUrl={`https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 4)}.jpg`}
-                      onClick={() => handleUserClick(user.username, user.$id)}
-                    />
-                  )
-                )}
-              </>
-            ) : error ? (
-              <p className="text-red-500">Failed to fetch users</p>
-            ) : (
-              <p className="text-gray-400">Loading users...</p>
-            )}
-          </ul>
+  <div className="p-2">
+    {/* User Info Display */}
+    {user ? (
+      <div className="mb-6">
+        <div className="text-xs text-white flex p-1 pl-3 bg-[#303749a5]">
+          <FaEnvelope size={20} className='mt-2 text-[#0066ff]' /> 
+          <span className="p-2 text-sm">{user.email}</span>
         </div>
       </div>
+    ) : (
+      <p className="text-white text-sm">Loading user...</p>
+    )}
+
+    {/* Search Bar */}
+    <div className="mb-6">
+      <input
+        type="text"
+        placeholder="Search"
+        className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-gray-400 focus:outline-none"
+        value={searchQuery}
+        onChange={handleSearchChange}
+        list="userList" // Link input to datalist
+      />
+      <datalist id="userList">
+        {filteredUsers?.map((userItem) => (
+          <option key={userItem.$id} value={userItem.username} />
+        ))}
+      </datalist>
+    </div>
+
+    <h3 className="text-lg font-bold mt-2">Group Members</h3>
+    <hr />
+    <ul className="space-y-3 p-1 overflow-y-auto h-[calc(100vh-180px)] scrollbar-hidden pb-10 pt-2 "> {/* Added overflow-y-auto here */}
+      {userData && userData.length > 0 ? (
+        <>
+          {/* Include current user */}
+          {user && (
+            <SidebarItem
+              key={user.$id}
+              userId={user.$id}
+              label={`${user.name} (You)`}
+              imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user
+              style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user
+            />
+          )}
+         <Link to="/AiChat"> <p className='p-2 bg-cyan-600 m-2 rounded-lg'>AiChat</p></Link>
+
+          {/* Map through other users */}
+          {Array.from(new Map(userData.map((user) => [user.username, user]))).map(
+            ([_, user]) => (
+              <SidebarItem
+                key={user.$id}
+                userId={user.$id}
+                label={user.username}
+                personalMessage="Online"
+                imageUrl={`https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 4)}.jpg`}
+                onClick={() => handleUserClick(user.username, user.$id)}
+              />
+            )
+          )}
+        </>
+      ) : error ? (
+        <p className="text-red-500">Failed to fetch users</p>
+      ) : (
+        <p className="text-gray-400">Loading users...</p>
+      )}
+    </ul>
+  </div>
+</div>
+
     </>
   );
 };

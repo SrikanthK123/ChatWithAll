@@ -9,7 +9,7 @@ import { useUser } from '../../UseContext';
 import { Query } from 'appwrite';
 
 const Login = () => {
-  const { user, loginUser, logoutUser } = useUser();  // Access user context
+  const { user, loginUser, logoutUser } = useUser(); // Access user context
   const [currState, setCurrState] = useState('Sign Up');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +18,13 @@ const Login = () => {
   const [avatar, setAvatar] = useState(null);
 
   const navigate = useNavigate();
-  
+
   useEffect(() => {
-    console.log("VITE_PROJECT_ID", import.meta.env.VITE_PROJECT_ID);
-    console.log("VITE_ENDPOINT", import.meta.env.VITE_ENDPOINT);
-    console.log(import.meta.env)
- }, []);
- 
+    console.log('VITE_PROJECT_ID', import.meta.env.VITE_PROJECT_ID);
+    console.log('VITE_ENDPOINT', import.meta.env.VITE_ENDPOINT);
+    console.log(import.meta.env);
+  }, []);
+
   // Check if the email is already registered
   const checkIfUserExists = async (email) => {
     try {
@@ -34,124 +34,115 @@ const Login = () => {
       console.error('Error checking user:', error);
       return false;
     }
-  }
- const checkIfUserNameExists = async (name) => {
-  try {
-    const response = await account.listUsers([Query.equal('name', name)]);
-    console.log('Username query response:', response); // Debugging line
-    return response.total > 0;
-  } catch (error) {
-    console.error('Error checking username:', error);
-    return false;
-  }
-}
-  
+  };
 
-// Login function
-async function login(email, password) {
-  try {
-    // Ensure no active session exists before logging in
-    await account.deleteSession('current').catch(() => {});
-
-    // Attempt to create a session
-    const session = await account.createEmailPasswordSession(email, password);
-    
-    // Get user info after session creation
-    const user = await account.get();
-    
-    loginUser(user);  // Update user context with logged-in user
-    
-    // Navigate to user chat page or home page
-    navigate(`/chat?${user.$id}`);
-    
-    // Display a success message
-    toast.success(`Welcome back, ${user.name}!`);
-
-    // Clear input fields
-    setEmail('');
-    setPassword('');
-  } catch (error) {
-    console.error('Login error:', error);
-
-    // Log the error to understand better
-    if (error.response) {
-      console.error('Error response:', error.response);
+  // Check if the username is already taken
+  const checkIfUserNameExists = async (name) => {
+    try {
+      const response = await account.listUsers([Query.equal('name', name)]);
+      return response.total > 0;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      return false;
     }
+  };
 
-    // Handle specific errors
-    if (error.message && error.message.includes("Invalid credentials")) {
-      toast.error('Invalid email or password. Please try again.');
-    } else {
-      toast.error('An unexpected error occurred during login.');
+  // Login function
+  const login = async (email, password) => {
+    try {
+      // Ensure no active session exists before logging in
+      await account.deleteSession('current').catch(() => {});
+
+      // Attempt to create a session
+      const session = await account.createEmailPasswordSession(email, password);
+
+      // Get user info after session creation
+      const user = await account.get();
+
+      loginUser(user); // Update user context with logged-in user
+
+      // Navigate to user chat page or home page
+      navigate(`/chat?${user.$id}`);
+
+      // Display a success message
+      toast.success(`Welcome back, ${user.name}!`);
+
+      // Clear input fields
+      setEmail('');
+      setPassword('');
+    } catch (error) {
+      console.error('Login error:', error);
+
+      if (error.message?.includes('Invalid credentials')) {
+        toast.error('Invalid email or password. Please try again.');
+      } else {
+        toast.error('An unexpected error occurred during login.');
+      }
     }
-  }
-}
+  };
 
-
-  
   // Register function
-  async function register(email, password, name) {
+  const register = async (email, password, name) => {
     if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters long.');
       return;
     }
-  
+
     const userExists = await checkIfUserExists(email);
     if (userExists) {
       toast.error('A user with this email already exists.');
       return;
     }
+
     const userNameExists = await checkIfUserNameExists(name);
     if (userNameExists) {
       toast.error('A user with this name already exists.');
       return;
     }
-  
+
     try {
       // Ensure no active session exists before creating a new user
       await account.deleteSession('current').catch(() => {});
-  
+
       // Create user account
       const user = await account.create(ID.unique(), email, password, name);
-  
+
       // Log in the user immediately after registration
       const session = await account.createEmailPasswordSession(email, password);
-      
+
       // Upload avatar if file is selected
       let avatarURL = '';
       if (avatar) {
-        const file = await storage.createFile('unique()', avatar); // Upload file to Appwrite
-        avatarURL = storage.getFilePreview(file.$id); // Generate avatar preview URL
+        const file = await storage.createFile('unique()', avatar);
+        avatarURL = storage.getFilePreview(file.$id);
       }
-  
-      // Optional: Save avatar URL to user preferences or database
+
+      // Save avatar URL to user preferences or database
       await account.updatePrefs({ avatar: avatarURL });
-  
-      // Show success message and navigate to login screen
+
       toast.success('Account created successfully! You can now log in.');
-      
-      // Reset the form and state
       setCurrState('Login');
       setEmail('');
       setPassword('');
       setName('');
-      setAvatar(null); // Clear avatar state
+      setAvatar(null);
     } catch (error) {
       console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');
     }
-  }
-   // Logout function
-  async function logout() {
+  };
+
+  // Logout function
+  const logout = async () => {
     try {
       await account.deleteSession('current');
-      logoutUser();  // Clear user context on logout
+      logoutUser(); // Clear user context on logout
       toast.success('Logged out successfully.');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out.');
     }
-  }
+  };
 
   return (
     <div className="LoginPage flex items-center justify-end w-screen h-screen">
@@ -161,11 +152,9 @@ async function login(email, password) {
           className="form"
           onSubmit={(e) => {
             e.preventDefault();
-            if (currState === 'Sign Up') {
-              register(email, password, name);
-            } else {
-              login(email, password);
-            }
+            currState === 'Sign Up'
+              ? register(email, password, name)
+              : login(email, password);
           }}
         >
           <span className="title">{currState}</span>
