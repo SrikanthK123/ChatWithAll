@@ -88,43 +88,55 @@ const TestingPersonalChat = () => {
     }
   }, [user]);
 
-  //Real Time Messages
-  useEffect(() => {
-    if (user && username) {
-      getMessages();
-  
-      const unsubscribe = client.subscribe(
-        `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
-        (response) => {
-          const newMessage = response.payload;
-  
-          setMessages((prev) => {
-            // Check if the message already exists
-            const exists = prev.some((msg) => msg.$id === newMessage.$id);
-  
-            if (response.event === 'delete') {
-              // Handle deletion
-              return prev.filter((msg) => msg.$id !== newMessage.$id);
-            }
-  
-            if (exists) {
-              // Handle update
-              return prev.map((msg) => 
-                msg.$id === newMessage.$id ? newMessage : msg
+  //Real Time Messages 
+ // Real-time subscription and message handling
+ useEffect(() => {
+  if (user && username) {
+    // Fetch initial messages when the component is loaded
+    getMessages();
+
+    const unsubscribe = client.subscribe(
+      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+      (response) => {
+        const newMessage = response.payload;
+        const event = response.events[0];
+
+        if (event.includes("delete")) {
+          // Handle message deletion
+          const deletedMessageId = newMessage.$id;
+          setMessages((prevMessages) =>
+            prevMessages.filter((msg) => msg.$id !== deletedMessageId)
+          );
+        } else if (event.includes("create") || event.includes("update")) {
+          // Handle message create or update
+          if (
+            (newMessage.senderName === user.name && newMessage.receiverName === username) ||
+            (newMessage.senderName === username && newMessage.receiverName === user.name)
+          ) {
+            setMessages((prevMessages) => {
+              const existingMessageIndex = prevMessages.findIndex(
+                (msg) => msg.$id === newMessage.$id
               );
-            }
-  
-            // Handle new message
-            return [...prev, newMessage];
-          });
+
+              if (existingMessageIndex !== -1) {
+                // Message exists, update it
+                const updatedMessages = [...prevMessages];
+                updatedMessages[existingMessageIndex] = newMessage;
+                return updatedMessages;
+              } else {
+                // Message doesn't exist, add it
+                return [...prevMessages, newMessage];
+              }
+            });
+          }
         }
-      );
-  
-      return () => unsubscribe();
-    }
-  }, [user, username]);
-  
-  
+      }
+    );
+
+    return () => unsubscribe();
+  }
+}, [user, username]);
+
   // New message submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -189,17 +201,26 @@ const TestingPersonalChat = () => {
   // Delete a message
   const deleteMessage = async (messageId) => {
     try {
+      // Delete the message from the database
       await databases.deleteDocument(
         import.meta.env.VITE_DATABASE_ID,
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
         messageId
       );
   
-      setMessages((prev) => prev.filter((msg) => msg.$id !== messageId));
+      // Immediately update the UI by removing the message from the state
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg.$id !== messageId));
+  
+      // Fetch the messages again to ensure the UI is consistent with the database state
+      getMessages();
+  
+      // Close the menu after deleting
+      setSelectedMenu(null);
     } catch (error) {
       console.error("Error deleting message:", error);
     }
   };
+  
   
   
   
