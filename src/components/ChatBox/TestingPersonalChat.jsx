@@ -91,36 +91,18 @@ const TestingPersonalChat = () => {
   // Real-time updates
   useEffect(() => {
     if (user && username) {
-      getMessages(); // This fetches messages as soon as the user loads
+      getMessages();
   
       const unsubscribe = client.subscribe(
         `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
         (response) => {
-          const event = response.events[0];
+          const newMessage = response.payload;
   
-          if (event.includes("delete")) {
-            // Handle message deletion
-            const deletedMessageId = response.payload.$id;
-            setMessages((prev) => prev.filter((msg) => msg.$id !== deletedMessageId));
-          } else if (event.includes("create") || event.includes("update")) {
-            // Handle message creation or update
-            const newMessage = response.payload;
-            if (
-              (newMessage.senderName === user.name && newMessage.receiverName === username) ||
-              (newMessage.senderName === username && newMessage.receiverName === user.name)
-            ) {
-              setMessages((prev) => {
-                const existingMessageIndex = prev.findIndex((msg) => msg.$id === newMessage.$id);
-                if (existingMessageIndex !== -1) {
-                  const updatedMessages = [...prev];
-                  updatedMessages[existingMessageIndex] = newMessage;
-                  return updatedMessages;
-                } else {
-                  return [...prev, newMessage];
-                }
-              });
-            }
-          }
+          setMessages((prev) => {
+            const exists = prev.some((msg) => msg.$id === newMessage.$id);
+            if (exists) return prev; // Prevent duplicates
+            return [...prev, newMessage];
+          });
         }
       );
   
@@ -128,12 +110,14 @@ const TestingPersonalChat = () => {
     }
   }, [user, username]);
   
+  
 
   // Handle message submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     if (!messageBody.trim() && !selectedFile) return;
-
+  
     const newMessage = {
       senderName: user.name,
       receiverName: username,
@@ -141,10 +125,9 @@ const TestingPersonalChat = () => {
       PersonalMessage: [messageBody.trim()],
       isRead: false,
     };
-    
-
-    if (editingMessageId) {
-      try {
+  
+    try {
+      if (editingMessageId) {
         // Update existing message
         await databases.updateDocument(
           import.meta.env.VITE_DATABASE_ID,
@@ -152,7 +135,7 @@ const TestingPersonalChat = () => {
           editingMessageId,
           { PersonalMessage: [messageBody.trim()] }
         );
-
+  
         setMessages((prev) =>
           prev.map((msg) =>
             msg.$id === editingMessageId
@@ -160,29 +143,25 @@ const TestingPersonalChat = () => {
               : msg
           )
         );
-        setEditingMessageId(null); // Reset editing state
-      } catch (error) {
-        console.error("Error updating message:", error);
-      }
-    } else {
-      try {
-        // Save the new message to the database
+        setEditingMessageId(null);
+      } else {
+        // Create a new message
         const createdMessage = await databases.createDocument(
           import.meta.env.VITE_DATABASE_ID,
           import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
           ID.unique(),
           newMessage
         );
-        setMessages((prev) => [...prev, createdMessage]); // Add the message to the state after creation
-        
-      } catch (error) {
-        console.error("Error sending message:", error);
+  
+        setMessages((prev) => [...prev, createdMessage]);
       }
+  
+      setMessageBody(""); // Clear the input field
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
-
-    setMessageBody(""); // Reset the input field
-    
   };
+  
   useEffect(() => {
     console.log("All Messages", messages);
   })
