@@ -7,7 +7,7 @@ import { Query, ID } from "appwrite";
 import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage, FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
-
+import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
 
 
 const TestingPersonalChat = () => {
@@ -179,11 +179,14 @@ const TestingPersonalChat = () => {
         );
   
         setMessages((prev) => {
-          // Ensure the message isn't already in the list
           const exists = prev.some((msg) => msg.$id === createdMessage.$id);
           if (exists) return prev; // Prevent duplicates
           return [...prev, createdMessage];
         });
+  
+        // Play sound after message is sent
+        const audio = new Audio(MessageSendPopSound);
+        audio.play();
       }
   
       setMessageBody(""); // Clear the input field
@@ -191,6 +194,7 @@ const TestingPersonalChat = () => {
       console.error("Error sending message:", error);
     }
   };
+  
   
   
   
@@ -273,6 +277,9 @@ const TestingPersonalChat = () => {
   
       // Add the message to the state
       setMessages((prev) => [...prev, createdMessage]);
+      // Play sound after message is sent
+      const audio = new Audio(MessageSendPopSound);
+      audio.play();
     } catch (error) {
       console.error("Error sending 'Hello!' message:", error);
     }
