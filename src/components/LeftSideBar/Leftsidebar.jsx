@@ -176,11 +176,18 @@ const Leftsidebar = () => {
               key={user.$id}
               userId={user.$id}
               label={`${user.name} (You)`}
-              imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user
-              style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user
+              imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user https://img.freepik.com/free-vector/robotic-artificial-intelligence-technology-smart-lerning-from-bigdata_1150-48136.jpg?t=st=1734702821~exp=1734706421~hmac=ae290813fa3cae9ca912cfa71ca3a1aee25d98e2c90250b4b6471aba132a3013&w=900
+              style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-microchip-background-vector-digital-transformation-concept_53876-112222.jpg?t=st=1734702333~exp=1734705933~hmac=dba4e2f955532d862555b5f9887b5dad4229fd2e584da90474be3c3aabe46c53&w=740
             />
           )}
-         <Link to="/AiChat"> <p className='p-2 bg-cyan-600 m-2 rounded-lg'>AiChat</p></Link>
+           
+         <Link to="/AiChat"> <p className='my-2'> <SidebarItem
+             
+              
+             label={`Chat With AI`}
+             imageUrl="https://thumbs.dreamstime.com/b/concept-man-interacting-ai-technology-future-305771501.jpg" // Placeholder image for current user Image ----> https://emiwebs.com/wp-content/uploads/AI-business-optimizatios.jpg 
+             style={{ backgroundColor:'#0891b2 ',color:'white' }} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-robot-cyborg-illustrations_24640-134419.jpg?t=st=1734702399~exp=1734705999~hmac=3bc66e499d031a323aaa3b638938861b6052d8fd9287cb8edac28e0bab9cd6ec&w=740
+           /></p></Link>
 
           {/* Map through other users */}
           {Array.from(new Map(userData.map((user) => [user.username, user]))).map(

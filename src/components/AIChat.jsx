@@ -35,7 +35,12 @@ const AIChat = () => {
 
     const savedMessages = localStorage.getItem("messages");
     if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
+      const parsedMessages = JSON.parse(savedMessages);
+      const messagesWithTimestamps = parsedMessages.map((msg) => ({
+        ...msg,
+        timestamp: msg.timestamp || new Date().toISOString(), // Add timestamp if missing
+      }));
+      setMessages(messagesWithTimestamps);
     }
   }, []);
 
@@ -75,10 +80,12 @@ const AIChat = () => {
 
       const truncatedAnswer = aiResponse.slice(0, 500) + (aiResponse.length > 500 ? "..." : "");
 
+      const currentTime = new Date().toISOString(); // Current timestamp
+
       const newMessages = [
         ...messages,
-        { type: "user", text: question, senderId: userId },
-        { type: "ai", text: truncatedAnswer, senderId: "ai" },
+        { type: "user", text: question, senderId: userId, timestamp: currentTime },
+        { type: "ai", text: truncatedAnswer, senderId: "ai", timestamp: currentTime },
       ];
 
       setMessages(newMessages);
@@ -86,9 +93,10 @@ const AIChat = () => {
       setQuestion("");
     } catch (error) {
       console.error("Error fetching AI response:", error);
+      const currentTime = new Date().toISOString();
       setMessages((prev) => [
         ...prev,
-        { type: "ai", text: "An error occurred. Please try again." },
+        { type: "ai", text: "An error occurred. Please try again.", timestamp: currentTime },
       ]);
     } finally {
       setIsLoading(false);
@@ -127,25 +135,24 @@ const AIChat = () => {
     <div className="bg-gray-900 min-h-screen flex flex-col items-center text-white">
       {/* Header */}
       <header className="py-4 bg-gray-800 w-full flex justify-between items-center px-6">
-  <div className="text-center flex-1">
-    <h1 className="text-2xl text-cyan-400 p-1 font-semibold">Chat With AI</h1>
-    {userName && <p className="text-sm">Welcome, {userName}!</p>}
-  </div>
-  
-  <button
-    className="text-red-500 p-2 py-1 my-2 border-2 border-red-500  rounded hover:bg-red-500 hover:text-[#001529] transition-all"
-    onClick={logoutUser}
-  >
-     <FaSignOutAlt size={25} /> 
-  </button>
-</header>
+        <div className="text-center flex-1">
+          <h1 className="text-2xl text-cyan-400 p-1 font-semibold">Chat With AI</h1>
+          {userName && <p className="text-sm">Welcome, {userName}!</p>}
+        </div>
 
+        <button
+          className="text-red-500 p-2 py-1 my-2 border-2 border-red-500 rounded hover:bg-red-500 hover:text-[#001529] transition-all"
+          onClick={logoutUser}
+        >
+          <FaSignOutAlt size={25} />
+        </button>
+      </header>
 
       {/* Chat Container */}
-      <main className="flex-grow w-full max-w-2xl px-4 py-6">
+      <main className="flex-grow w-full max-w-2xl px-4 py-6 overflow-y-auto mb-20">
         {showAlert && <div className="text-red-500 mb-4">Please type a message!</div>}
 
-        <div className="space-y-4 overflow-y-auto">
+        <div className="space-y-4">
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -153,10 +160,14 @@ const AIChat = () => {
             >
               <div
                 className={`p-3 rounded-lg shadow-md max-w-xs ${
-                  msg.type === "user" ? "bg-slate-500 text-white self-end" : "bg-cyan-700 text-white self-start"
+                  msg.type === "user"
+                    ? "bg-slate-500 text-white self-end"
+                    : "bg-cyan-700 text-white self-start"
                 }`}
               >
-                <small className="text-[13px]">{msg.senderId === "ai" ? "AI Generate" : userName}</small>
+                <small className={`text-[13px] ${msg.senderId === "ai" ? "text-yellow-200" : "text-black"}`}>
+        {msg.senderId === "ai" ? "AI Generate" : userName}
+      </small>
                 <p className="text-sm py-2">{msg.text}</p>
                 <small className="block text-gray-300 text-xs">{formatTime(msg.timestamp)}</small>
               </div>
@@ -170,7 +181,7 @@ const AIChat = () => {
               )}
             </div>
           ))}
-          
+
           {/* Loading Message */}
           {isLoading && (
             <div className="flex justify-center items-center py-4 text-gray-400">
@@ -182,48 +193,47 @@ const AIChat = () => {
 
       {/* Input Section */}
       <footer className="w-full bg-gray-800 p-4 fixed bottom-0 left-0">
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        generateAnswer();
-      }}
-      className="flex items-center gap-2"
-    >
-      <textarea
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Type a message..."
-        className="flex-grow p-2 rounded-lg bg-gray-700 text-white resize-none h-12 focus:outline-none"
-      />
-      <button
-        type="button"
-        onClick={() => setShowPicker(!showPicker)}
-        className="p-2 bg-gray-700 rounded-lg"
-      >
-        😀
-      </button>
-      {showPicker && (
-        <div className="absolute bottom-20 right-4">
-          <EmojiPicker onEmojiClick={handleEmojiClick} />
-        </div>
-      )}
-      <button
-        type="submit"
-        className="p-2 bg-blue-500 rounded-lg"
-        disabled={isLoading}
-      >
-        <FaLocationArrow />
-      </button>
-      {/* Clear All Button */}
-      <button
-        type="button"
-        onClick={clearAllMessages}
-        className="p-2 bg-red-500 rounded-lg"
-      >
-        Clear
-      </button>
-    </form>
-  </footer>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            generateAnswer();
+          }}
+          className="flex items-center gap-2"
+        >
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-grow p-2 rounded-lg bg-gray-700 text-white resize-none h-12 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPicker(!showPicker)}
+            className="p-2 bg-gray-700 rounded-lg"
+          >
+            😀
+          </button>
+          {showPicker && (
+            <div className="absolute bottom-20 right-4">
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </div>
+          )}
+          <button
+            type="submit"
+            className="p-2 bg-blue-500 rounded-lg"
+            disabled={isLoading}
+          >
+            <FaLocationArrow />
+          </button>
+          <button
+            type="button"
+            onClick={clearAllMessages}
+            className="p-2 bg-red-500 rounded-lg"
+          >
+            Clear
+          </button>
+        </form>
+      </footer>
     </div>
   );
 };
