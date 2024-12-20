@@ -232,3 +232,22 @@ background-position: left, right;
 .scrollbar-hidden {
   -ms-overflow-style: none; /* Hides scrollbar in IE 10+ */
 }
+@keyframes gradientTravel {
+  0% {
+    background-position: 100% 0%;
+    
+  }
+  100% {
+    background-position: -100% 0%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #f8da5b, #407088);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  color: transparent;
+  display: inline-block;
+  animation: gradientTravel 3s ease-in-out infinite;
+}
+
