@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect } from "react";
 import { FaCog, FaBell, FaUser, FaTimes, FaPen } from "react-icons/fa";
-import { useUser } from "../../UseContext"; 
-import { Link, useNavigate } from "react-router-dom"; 
-import { account } from "../../lib/appwrite";
+import { useUser } from "../../UseContext";
+import { Link, useNavigate } from "react-router-dom";
+import { account, storage } from "../../lib/appwrite";
 import PropTypes from "prop-types";
 
 const Rightsidebar = () => {
@@ -13,31 +13,52 @@ const Rightsidebar = () => {
     x: window.innerWidth - 378,
     y: 0,
   });
-  const [userData, setUserData] = useState(null);
   const [description, setDescription] = useState("Hey there! I am using Chat-app");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   const buttonRef = useRef(null);
   const { user, logoutUser } = useUser();
   const navigate = useNavigate();
 
- useEffect(() => {
-    if (user) {
-      // Load description from local storage
-      const storedDescription = localStorage.getItem(`description_${user.$id}`);
-      if (storedDescription) {
-        setDescription(storedDescription); 
-      } else {
-        // Set default description in localStorage if not already set
-        localStorage.setItem(`description_${user.$id}`, description); 
-      }
-    }
-  }, [user]);
-  
+  const MediaImages = [
+    {
+      Medimage:
+        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
+    },
+    {
+      Medimage:"https://img.freepik.com/free-photo/modern-stationary-collection-arrangement_23-2149309625.jpg?t=st=1734773138~exp=1734776738~hmac=e70012bdd6890a76732722601fb8c1446dccff8444fbab39685066600eb73478&w=1060"
+    },
+    {
+      Medimage:'https://img.freepik.com/free-vector/reporter-interviewing-celebrities-successful-people_74855-6633.jpg?t=st=1734792490~exp=1734796090~hmac=38856a93738b6d19fe980077353a69b486a02939d70057873716fb1cbe89a10e&w=1380'
+    },
+  {
+    Medimage:'https://img.freepik.com/free-photo/cascade-boat-clean-china-natural-rural_1417-1356.jpg?t=st=1734773059~exp=1734776659~hmac=625dc4debb78d29f39c7ca8cb428ba4c835c4f9f020c44e600ff62b7a63c72db&w=1060'
+  }
+  ];
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await account.get();
+        setUserData(userData);
+
+        const storedDescription = localStorage.getItem(`description_${userData.$id}`);
+        if (storedDescription) {
+          setDescription(storedDescription);
+        } else {
+          localStorage.setItem(`description_${userData.$id}`, description);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+      fetchUserData();
+    
+  }, [user]);
+
+  const toggleSidebar = () => setIsOpen(!isOpen);
 
   const onMouseDown = (e) => {
     setIsDragging(true);
@@ -63,42 +84,51 @@ const Rightsidebar = () => {
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  const handleDescriptionEdit = () => {
-    setIsEditingDescription(true);
-  };
+  const handleDescriptionEdit = () => setIsEditingDescription(true);
 
   const saveDescription = () => {
     setIsEditingDescription(false);
-    localStorage.setItem(`description_${user.$id}`, description); 
+    localStorage.setItem(`description_${user.$id}`, description);
   };
+
+  const handleUploadClick = async () => {
+    if (!user) {
+      alert("User is not logged in or data is not loaded.");
+      return;
+    }
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        alert("No file selected. Please try again.");
+        return;
+      }
+
+      try {
+        const bucketId = "6745c7af000a499a05f5"; // Replace with your actual bucket ID
+        const fileId = await storage.createFile(bucketId, file);
+        console.log("File uploaded successfully:", fileId);
+      } catch (error) {
+        console.error("File upload failed:", error);
+        alert("File upload failed. Please try again.");
+      }
+    };
+
+    fileInput.click();
+  };
+
   const handleLogout = async () => {
     try {
-      console.log("Logging out...");
-      await logoutUser(); // Ensure this function is correctly implemented in your context
-      console.log("Logout successful.");
-      navigate("/"); // Redirect to home page after logout
+      await logoutUser();
+      navigate("/");
     } catch (error) {
-      console.error("Error during logout:", error);
+      console.error("Logout failed:", error);
     }
   };
-  const MediaImages = [
-    {
-      Medimage:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
-    },
-    {
-      Medimage:
-        "https://img.freepik.com/free-photo/cascade-boat-clean-china-natural-rural_1417-1356.jpg?t=st=1734773059~exp=1734776659~hmac=625dc4debb78d29f39c7ca8cb428ba4c835c4f9f020c44e600ff62b7a63c72db&w=1060",
-    },
-    {
-      Medimage:
-        "https://img.freepik.com/free-vector/group-young-people_23-2148454220.jpg?t=st=1734773098~exp=1734776698~hmac=8466aaf0cd7b87d8033656bda6382628fe66d7a6129bd9ef35bf3edf897ff301&w=1060",
-    },
-    {
-      Medimage:
-        "https://img.freepik.com/free-photo/modern-stationary-collection-arrangement_23-2149309625.jpg?t=st=1734773138~exp=1734776738~hmac=e70012bdd6890a76732722601fb8c1446dccff8444fbab39685066600eb73478&w=1060",
-    },
-  ];
 
   return (
     <>
@@ -130,6 +160,13 @@ const Rightsidebar = () => {
               alt="Profile"
               className="rounded-full w-full h-full object-cover shadow-md"
             />
+            <button
+              className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+              onClick={handleUploadClick}
+              aria-label="Upload Profile Picture"
+            >
+              <FaPen />
+            </button>
           </div>
           <p className="font-mono text-center text-xl text-[#0066ff] font-semibold mt-2">
             {userData?.name || "Loading..."}
@@ -167,6 +204,7 @@ const Rightsidebar = () => {
             )}
           </div>
         </div>
+
         <div className="p-2">
           <h1>Media</h1>
           <hr className="my-1" />
@@ -180,16 +218,14 @@ const Rightsidebar = () => {
               />
             ))}
           </div>
+          <ul className="space-y-3 pt-3">
+            <SidebarItem label="Notifications" icon={<FaBell />} />
+            <Link to="/Profile">
+              <SidebarItem label="Profile" icon={<FaUser />} />
+            </Link>
+            <SidebarItem label="Settings" icon={<FaCog />} />
+          </ul>
         </div>
-
-        <ul className="space-y-3 pt-3 pl-2">
-          
-          <Link to="/Profile">
-            <SidebarItem label="Profile" icon={<FaUser />} />
-          </Link>
-          <SidebarItem label="Notifications" icon={<FaBell />} />
-          <SidebarItem label="Settings" icon={<FaCog />} />
-        </ul>
 
         <div className="absolute bottom-4 left-0 w-full flex justify-center">
           <button

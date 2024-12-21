@@ -47,7 +47,7 @@ const Leftsidebar = () => {
           [Query.orderDesc('$createdAt')]
         );
         setUserData(response.documents);
-        console.log('Fetched user data:', response.documents);
+        console.log('Fetched user data Left:', response.documents);
       } catch (error) {
         console.error('Error fetching user documents:', error);
       }
