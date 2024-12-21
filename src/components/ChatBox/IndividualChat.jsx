@@ -6,6 +6,7 @@ import { account, client, databases,storage } from "../../lib/appwrite";
 import { AlluseUsers } from '../../hook/AllUserData';
 import { ID, Query } from 'appwrite';
 import EmojiPicker from 'emoji-picker-react';
+import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
 
 const IndividualChat = () => {
   const [message, setMessage] = useState('');
@@ -175,6 +176,7 @@ const IndividualChat = () => {
         );
         setMessageBody('');
         setEditingMessageId(null); // Reset editing state
+       
       } catch (error) {
         console.error('Error updating message:', error);
       }
@@ -189,6 +191,8 @@ const IndividualChat = () => {
         );
   
         setMessages((prevMessages) => [response, ...prevMessages]);
+        const audio = new Audio(MessageSendPopSound);
+        audio.play();
         setMessageBody('');
       } catch (error) {
         console.error('Error creating message:', error);

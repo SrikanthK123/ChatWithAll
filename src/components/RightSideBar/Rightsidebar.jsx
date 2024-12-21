@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaCog, FaBell, FaUser, FaTimes, FaPen } from "react-icons/fa";
 import { useUser } from "../../UseContext"; 
 import { Link, useNavigate } from "react-router-dom"; 
-import { account, storage } from "../../lib/appwrite";
-import PropTypes from 'prop-types';
+import { account } from "../../lib/appwrite";
+import PropTypes from "prop-types";
 
 const Rightsidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,18 +14,26 @@ const Rightsidebar = () => {
     y: 0,
   });
   const [userData, setUserData] = useState(null);
+  const [description, setDescription] = useState("Hey there! I am using Chat-app");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   const buttonRef = useRef(null);
-
   const { user, logoutUser } = useUser();
   const navigate = useNavigate();
 
-  const MediaImages = [
-    {
-      Medimage:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
-    },
-  ];
+ useEffect(() => {
+    if (user) {
+      // Load description from local storage
+      const storedDescription = localStorage.getItem(`description_${user.$id}`);
+      if (storedDescription) {
+        setDescription(storedDescription); 
+      } else {
+        // Set default description in localStorage if not already set
+        localStorage.setItem(`description_${user.$id}`, description); 
+      }
+    }
+  }, [user]);
+  
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -55,72 +63,42 @@ const Rightsidebar = () => {
     window.addEventListener("mouseup", onMouseUp);
   };
 
+  const handleDescriptionEdit = () => {
+    setIsEditingDescription(true);
+  };
+
+  const saveDescription = () => {
+    setIsEditingDescription(false);
+    localStorage.setItem(`description_${user.$id}`, description); 
+  };
   const handleLogout = async () => {
     try {
-      await logoutUser(); // Log the user out
-      navigate("/"); // Redirect to home page
+      console.log("Logging out...");
+      await logoutUser(); // Ensure this function is correctly implemented in your context
+      console.log("Logout successful.");
+      navigate("/"); // Redirect to home page after logout
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Error during logout:", error);
     }
   };
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user) {
-        try {
-          const userData = await account.get();
-          setUserData(userData);
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      }
-    };
-
-    fetchUserData();
-  }, [user]); // Fetch user data when `user` changes
-
-  const handleUploadClick = async () => {
-    if (!user) {
-      alert("User is not logged in or data is not loaded.");
-      return;
-    }
-  
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-  
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0]; // Get the selected file
-  
-      // Debugging: Check if file is selected
-      console.log("File selected:", file);
-      if (!file) {
-        console.error("No file selected");
-        alert("No file selected. Please try again.");
-        return;
-      }
-  
-      try {
-        // Debugging: Check the properties of the file object
-        console.log("Uploading file:", file);
-  
-        // Ensure the bucket ID is correct
-        const bucketId = "6745c7af000a499a05f5"; // Replace with your actual bucket ID
-  
-        // Upload the file
-        const fileId = await storage.createFile(bucketId, file);
-        
-        // Debugging: Check file upload result
-        console.log("File uploaded successfully", fileId);
-      } catch (error) {
-        console.error("File upload failed:", error);
-        alert("File upload failed. Please try again.");
-      }
-    };
-  
-    fileInput.click(); // Trigger file input
-  };
-  
+  const MediaImages = [
+    {
+      Medimage:
+        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
+    },
+    {
+      Medimage:
+        "https://img.freepik.com/free-photo/cascade-boat-clean-china-natural-rural_1417-1356.jpg?t=st=1734773059~exp=1734776659~hmac=625dc4debb78d29f39c7ca8cb428ba4c835c4f9f020c44e600ff62b7a63c72db&w=1060",
+    },
+    {
+      Medimage:
+        "https://img.freepik.com/free-vector/group-young-people_23-2148454220.jpg?t=st=1734773098~exp=1734776698~hmac=8466aaf0cd7b87d8033656bda6382628fe66d7a6129bd9ef35bf3edf897ff301&w=1060",
+    },
+    {
+      Medimage:
+        "https://img.freepik.com/free-photo/modern-stationary-collection-arrangement_23-2149309625.jpg?t=st=1734773138~exp=1734776738~hmac=e70012bdd6890a76732722601fb8c1446dccff8444fbab39685066600eb73478&w=1060",
+    },
+  ];
 
   return (
     <>
@@ -148,26 +126,47 @@ const Rightsidebar = () => {
         <div className="flex flex-col items-center justify-center p-4 mt-12 relative">
           <div className="relative group w-32 h-32">
             <img
-              src="https://img.freepik.com/free-photo/photo-handsome-unshaven-guy-looks-with-pleasant-expression-directly-camera_176532-8164.jpg?t=st=1731593422~exp=1731597022~hmac=659010eb8aa252af7acbd40a3197318652431ee610e73b75806921b04583cf81&w=1060"
+              src="https://img.freepik.com/free-photo/photo-handsome-unshaven-guy-looks-with-pleasant-expression-directly-camera_176532-8164.jpg"
               alt="Profile"
               className="rounded-full w-full h-full object-cover shadow-md"
             />
-            <button
-              className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-              onClick={handleUploadClick}
-              aria-label="Upload Profile Picture"
-            >
-              <FaPen />
-            </button>
           </div>
           <p className="font-mono text-center text-xl text-[#0066ff] font-semibold mt-2">
             {userData?.name || "Loading..."}
           </p>
-          <p className="font-sans text-center text-sm text-slate-400">
-            Hey there! I am using Chat-app
-          </p>
+          <div className="flex items-center gap-2">
+            {!isEditingDescription ? (
+              <>
+                <p className="font-sans text-center text-sm text-slate-400">
+                  {description}
+                </p>
+                <button
+                  className="text-slate-400 hover:text-white"
+                  onClick={handleDescriptionEdit}
+                  aria-label="Edit Description"
+                >
+                  <FaPen />
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="bg-slate-700 text-white border-b border-slate-400 focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  className="text-slate-400 hover:text-white"
+                  onClick={saveDescription}
+                  aria-label="Save Description"
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-
         <div className="p-2">
           <h1>Media</h1>
           <hr className="my-1" />
@@ -181,15 +180,16 @@ const Rightsidebar = () => {
               />
             ))}
           </div>
-
-          <ul className="space-y-3 pt-3">
-            <SidebarItem label="Notifications" icon={<FaBell />} />
-            <Link to="/Profile">
-              <SidebarItem label="Profile" icon={<FaUser />} />
-            </Link>
-            <SidebarItem label="Settings" icon={<FaCog />} />
-          </ul>
         </div>
+
+        <ul className="space-y-3 pt-3 pl-2">
+          
+          <Link to="/Profile">
+            <SidebarItem label="Profile" icon={<FaUser />} />
+          </Link>
+          <SidebarItem label="Notifications" icon={<FaBell />} />
+          <SidebarItem label="Settings" icon={<FaCog />} />
+        </ul>
 
         <div className="absolute bottom-4 left-0 w-full flex justify-center">
           <button
@@ -204,7 +204,6 @@ const Rightsidebar = () => {
   );
 };
 
-// SidebarItem component with PropTypes validation
 const SidebarItem = ({ label, icon }) => (
   <li className="flex items-center gap-2 cursor-pointer hover:bg-slate-700 p-2 rounded-md">
     <span>{icon}</span>
@@ -212,7 +211,6 @@ const SidebarItem = ({ label, icon }) => (
   </li>
 );
 
-// PropTypes validation for SidebarItem
 SidebarItem.propTypes = {
   label: PropTypes.string.isRequired,
   icon: PropTypes.node.isRequired,
