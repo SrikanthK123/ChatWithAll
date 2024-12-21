@@ -1,208 +1,238 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useRef, useEffect } from "react";
-import { FaCog, FaBell, FaUser, FaTimes, FaPen } from "react-icons/fa";
-import { useUser } from "../UseContext";
-import { Link, useNavigate } from "react-router-dom"; 
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { account } from "../lib/appwrite"; // Ensure Appwrite is correctly configured
+import { FaTrash, FaLocationArrow, FaSignOutAlt, FaEllipsisV } from "react-icons/fa"; // Icons
+import EmojiPicker from "emoji-picker-react"; // Emoji picker component
+import { useNavigate } from "react-router-dom";
 
-const Rightsidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({
-    x: window.innerWidth - 378,
-    y: 0,
-  });
-  const [description, setDescription] = useState("Hey there! I am using Chat-app");
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [originalDescription, setOriginalDescription] = useState(description);
+const GEMINI_API_KEY = "AIzaSyBAi_WiK4z3HSBrnOdhjdENOlb0WH6HcAI"; // Replace with your actual API key
 
-  const buttonRef = useRef(null);
-  const { user, logoutUser } = useUser();
+const AIChat = () => {
+  const [question, setQuestion] = useState(""); // Question input
+  const [messages, setMessages] = useState([]); // All chat messages
+  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [showAlert, setShowAlert] = useState(false); // Empty question alert
+  const [userName, setUserName] = useState(""); // User's name
+  const [userId, setUserId] = useState(""); // User's ID
+  const [showPicker, setShowPicker] = useState(false); // Emoji picker toggle
+  const [activeDropdown, setActiveDropdown] = useState(null); // Active dropdown menu
+
   const navigate = useNavigate();
 
-  // Load description from localStorage on mount
+  // Fetch user data and messages on mount
   useEffect(() => {
-    if (user) {
-      const storedDescription = localStorage.getItem(`description_${user.$id}`);
-      if (storedDescription) {
-        setDescription(storedDescription);
-        setOriginalDescription(storedDescription);
-      } else {
-        localStorage.setItem(`description_${user.$id}`, description); // Store default if none exists
-      }
-    }
-  }, [user]);
-
-  // Save the description when changed
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(`description_${user.$id}`, description);
-    }
-  }, [description, user]);
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const onMouseDown = (e) => {
-    setIsDragging(true);
-    const offsetX = e.clientX - position.x;
-    const offsetY = e.clientY - position.y;
-
-    const onMouseMove = (e) => {
-      if (isDragging) {
-        setPosition({
-          x: e.clientX - offsetX,
-          y: e.clientY - offsetY,
-        });
+    const fetchUserData = async () => {
+      try {
+        const userData = await account.get();
+        setUserName(userData.name);
+        setUserId(userData.$id);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
       }
     };
 
-    const onMouseUp = () => {
-      setIsDragging(false);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
+    fetchUserData();
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    const savedMessages = localStorage.getItem("messages");
+    if (savedMessages) {
+      const parsedMessages = JSON.parse(savedMessages);
+      const messagesWithTimestamps = parsedMessages.map((msg) => ({
+        ...msg,
+        timestamp: msg.timestamp || new Date().toISOString(), // Add timestamp if missing
+      }));
+      setMessages(messagesWithTimestamps);
+    }
+  }, []);
+
+  // Format timestamps for chat bubbles
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return isNaN(date.getTime())
+      ? ""
+      : new Intl.DateTimeFormat("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).format(date);
   };
 
-  const handleDescriptionEdit = () => {
-    setOriginalDescription(description); // Save the original description to revert if canceled
-    setIsEditingDescription(true);
-  };
+  // Generate AI response
+  const generateAnswer = async () => {
+    if (!question.trim()) {
+      setShowAlert(true);
+      return;
+    }
 
-  const saveDescription = () => {
-    setIsEditingDescription(false);
-  };
+    setIsLoading(true);
+    setShowAlert(false);
 
-  const cancelDescriptionEdit = () => {
-    setDescription(originalDescription); // Revert to the original description
-    setIsEditingDescription(false);
-  };
-
-  const handleLogout = async () => {
     try {
-      console.log("Logging out...");
-      await logoutUser(); // Ensure this function is correctly implemented in your context
-      console.log("Logout successful.");
-      navigate("/"); // Redirect to home page after logout
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          contents: [{ parts: [{ text: question }] }],
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      const aiResponse =
+        response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
+
+      const truncatedAnswer = aiResponse.slice(0, 500) + (aiResponse.length > 500 ? "..." : "");
+
+      const currentTime = new Date().toISOString(); // Current timestamp
+
+      const newMessages = [
+        ...messages,
+        { type: "user", text: question, senderId: userId, timestamp: currentTime },
+        { type: "ai", text: truncatedAnswer, senderId: "ai", timestamp: currentTime },
+      ];
+
+      setMessages(newMessages);
+      localStorage.setItem("messages", JSON.stringify(newMessages));
+      setQuestion("");
     } catch (error) {
-      console.error("Error during logout:", error);
+      console.error("Error fetching AI response:", error);
+      const currentTime = new Date().toISOString();
+      setMessages((prev) => [
+        ...prev,
+        { type: "ai", text: "An error occurred. Please try again.", timestamp: currentTime },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
   };
- 
+
+  // Delete a specific message
+  const deleteMessage = (index) => {
+    const updatedMessages = messages.filter((_, i) => i !== index);
+    setMessages(updatedMessages);
+    localStorage.setItem("messages", JSON.stringify(updatedMessages));
+  };
+
+  // Clear all messages
+  const clearAllMessages = () => {
+    setMessages([]);
+    localStorage.removeItem("messages");
+  };
+
+  // Handle emoji selection
+  const handleEmojiClick = (emoji) => {
+    setQuestion((prev) => prev + emoji.emoji);
+  };
+
+  const logoutUser = () => {
+    try {
+      localStorage.removeItem("messages");
+      navigate("/");
+    } catch (error) {
+      alert("Error logging out. Please try again.");
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
-    <>
-      <button
-        onClick={toggleSidebar}
-        onMouseDown={onMouseDown}
-        className="fixed p-2 m-2 bg-[#368ddd] text-white rounded-full md:hidden z-50"
-        aria-label="Toggle Sidebar"
-        style={{
-          right: `${position.x + 10}px`,
-          top: `${position.y}px`,
-          borderRadius: "50%",
-          transition: "left 0.1s, top 0.1s",
-        }}
-        ref={buttonRef}
-      >
-        {isOpen ? <FaTimes size={20} /> : <FaUser size={20} />}
-      </button>
+    <div className="bg-gray-900 min-h-screen flex flex-col items-center text-white">
+      {/* Header */}
+      <header className="py-4 bg-gray-800 w-full flex justify-between items-center px-6">
+        <div className="text-center flex-1">
+          <h1 className="text-2xl text-cyan-400 p-1 font-semibold">Chat With AI</h1>
+          {userName && <p className="text-sm">Welcome, {userName}!</p>}
+        </div>
 
-      <div
-        className={`fixed top-0 right-0 h-screen w-72 z-40 bg-slate-800 text-white shadow-lg transition-transform duration-300 ease-in-out overflow-y-auto transform ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } md:translate-x-0`}
-      >
-        <div className="flex flex-col items-center justify-center p-4 mt-12 relative">
-          <div className="relative group w-32 h-32">
-            <img
-              src="https://img.freepik.com/free-photo/photo-handsome-unshaven-guy-looks-with-pleasant-expression-directly-camera_176532-8164.jpg"
-              alt="Profile"
-              className="rounded-full w-full h-full object-cover shadow-md"
-            />
-          </div>
-          <p className="font-mono text-center text-xl text-[#0066ff] font-semibold mt-2">
-            {user?.name || "Loading..."}
-          </p>
-          <div className="flex items-center gap-2">
-            {!isEditingDescription ? (
-              <>
-                <p className="font-sans text-center text-sm text-slate-400">
-                  {description}
-                </p>
-                <button
-                  className="text-slate-400 hover:text-white"
-                  onClick={handleDescriptionEdit}
-                  aria-label="Edit Description"
+        <button
+          className="text-red-500 p-2 py-1 my-2 border-2 border-red-500 rounded hover:bg-red-500 hover:text-[#001529] transition-all"
+          onClick={logoutUser}
+        >
+          <FaSignOutAlt size={25} />
+        </button>
+      </header>
+
+      {/* Chat Container */}
+      <main className="flex-grow w-full max-w-2xl px-4 py-6 overflow-y-auto mb-20">
+        {showAlert && <div className="text-red-500 mb-4">Please type a message!</div>}
+
+        <div className="space-y-4">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`p-3 rounded-lg shadow-md max-w-xs ${
+                  msg.type === "user"
+                    ? "bg-slate-500 text-white self-end"
+                    : "bg-cyan-700 text-white self-start"
+                }`}
+                style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}
+              >
+                 
+                <small
+                  className={`text-[13px] ${msg.senderId === "ai" ? "text-yellow-200" : "text-black"}`}
                 >
-                  <FaPen />
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="bg-slate-700 text-white border-b border-slate-400 focus:border-blue-500 focus:outline-none"
-                />
-                <button
-                  className="text-slate-400 hover:text-white"
-                  onClick={saveDescription}
-                  aria-label="Save Description"
-                >
-                  Save
-                </button>
-                <button
-                  className="text-slate-400 hover:text-white"
-                  onClick={cancelDescriptionEdit}
-                  aria-label="Cancel Description Edit"
-                >
-                  Cancel
-                </button>
+                  {msg.senderId === "ai" ? "AI Generate" : userName}
+                </small>
+                <p className="text-sm py-2">{msg.text}</p>
+                <small className="block text-gray-300 text-xs">{formatTime(msg.timestamp)}</small>
               </div>
-            )}
-          </div>
-          
+            </div>
+          ))}
+
+          {/* Loading Message */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-4 text-gray-400">
+              <h1 className="text-3xl gradient-text font-semibold font-mono">AI Chat</h1>
+            </div>
+          )}
         </div>
-       
-        
+      </main>
 
-        <ul className="space-y-3 pt-3">
-          <SidebarItem label="Notifications" icon={<FaBell />} />
-          <Link to="/Profile">
-            <SidebarItem label="Profile" icon={<FaUser />} />
-          </Link>
-          <SidebarItem label="Settings" icon={<FaCog />} />
-        </ul>
-
-        <div className="absolute bottom-4 left-0 w-full flex justify-center">
+      {/* Input Section */}
+      <footer className="w-full bg-gray-800 p-4 fixed bottom-0 left-0">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            generateAnswer();
+          }}
+          className="flex items-center gap-2"
+        >
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-grow p-2 rounded-lg bg-gray-700 text-white resize-none h-12 focus:outline-none"
+          />
           <button
-            className="py-2 text-center bg-[#0066ff] text-white px-8 rounded-md"
-            onClick={handleLogout}
+            type="button"
+            onClick={() => setShowPicker(!showPicker)}
+            className="p-2 bg-gray-700 rounded-lg"
           >
-            Logout
+            😀
           </button>
-        </div>
-      </div>
-    </>
+          {showPicker && (
+            <div className="absolute bottom-20 right-4">
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </div>
+          )}
+          <button
+            type="submit"
+            className="p-2 bg-blue-500 rounded-lg"
+            disabled={isLoading}
+          >
+            <FaLocationArrow />
+          </button>
+          <button
+            type="button"
+            onClick={clearAllMessages}
+            className="p-2 bg-red-500 rounded-lg"
+          >
+            Clear
+          </button>
+        </form>
+      </footer>
+    </div>
   );
 };
 
-const SidebarItem = ({ label, icon }) => (
-  <li className="flex items-center gap-2 cursor-pointer hover:bg-slate-700 p-2 rounded-md">
-    <span>{icon}</span>
-    <span className="text-lg">{label}</span>
-  </li>
-);
-
-SidebarItem.propTypes = {
-  label: PropTypes.string.isRequired,
-  icon: PropTypes.node.isRequired,
-};
-
-export default Rightsidebar;
+export default AIChat;
