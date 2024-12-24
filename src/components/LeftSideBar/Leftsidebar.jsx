@@ -181,12 +181,12 @@ const Leftsidebar = () => {
             />
           )}
            
-         <Link to="/AiChat"> <p className='my-2'> <SidebarItem
+         <Link to="/AiChat"> <p className='my-2 AIChat'> <SidebarItem 
              
               
              label={`Chat With AI`}
              imageUrl="https://thumbs.dreamstime.com/b/concept-man-interacting-ai-technology-future-305771501.jpg" // Placeholder image for current user Image ----> https://emiwebs.com/wp-content/uploads/AI-business-optimizatios.jpg 
-             style={{ backgroundColor:'#0891b2 ',color:'white' }} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-robot-cyborg-illustrations_24640-134419.jpg?t=st=1734702399~exp=1734705999~hmac=3bc66e499d031a323aaa3b638938861b6052d8fd9287cb8edac28e0bab9cd6ec&w=740
+             style={{ backgroundColor:'#0891b2 ',color:'white'}} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-robot-cyborg-illustrations_24640-134419.jpg?t=st=1734702399~exp=1734705999~hmac=3bc66e499d031a323aaa3b638938861b6052d8fd9287cb8edac28e0bab9cd6ec&w=740
            /></p></Link>
 
           {/* Map through other users */}

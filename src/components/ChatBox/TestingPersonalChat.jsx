@@ -23,10 +23,51 @@ const TestingPersonalChat = () => {
   const [isMessageFocused, setIsMessageFocused] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null); // For file upload
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentInfo, setCurrentInfo] = useState(null);;
 
   
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModal = (info) => {
+    setCurrentInfo(info);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentInfo(null);
+  };
+  // Modal Pop-Up
+  const Info = [
+    {
+      title: "Camera",
+      ImgUrl: "https://img.freepik.com/free-vector/couple-photo-booth-concept-illustration_114360-4712.jpg",
+      Para: "Please grant camera access to use this feature.",
+    },
+    {
+      title: "Image",
+      ImgUrl: "https://img.freepik.com/free-vector/concept-with-selfie-social-application_23-2148280535.jpg?t=st=1735050348~exp=1735053948~hmac=4a3651ffe939d89c3a4e14f1c9a88622cb9b97e3e486a5b982e27e90077802b2&w=740",
+      Para: "Access your image gallery to upload or select images.",
+    },
+    {
+      title: "Video",
+      ImgUrl: "https://img.freepik.com/free-vector/telecommuting-concept_52683-36509.jpg?t=st=1735050139~exp=1735053739~hmac=0e45f14d710514b76fc3521ce7b2d256ffa678a6c10fffe537876048241879be&w=1060",
+      Para: "Enable video access to record or upload videos.",
+    },
+    {
+      title: "Location",
+      ImgUrl: "https://img.freepik.com/free-vector/directions-concept-illustration_114360-5203.jpg?t=st=1735050039~exp=1735053639~hmac=ff3e8bbd649744d09379a7b317ea90456935739c0f622819deca5c34fc83dad0&w=740",
+      Para: "Allow location access to use this feature effectively.",
+    },
+    {
+      title: "File",
+      ImgUrl: "https://img.freepik.com/free-vector/concept-landing-page-transfer-files_23-2148298755.jpg?t=st=1735049761~exp=1735053361~hmac=8856396895a74df16322704efc6a34739519707a6d26b0a496440f34c830ca81&w=740",
+      Para: "Grant file access to upload and manage your files.",
+    },
+    {
+      title: "Money",
+      ImgUrl: "https://img.freepik.com/free-vector/volunteers-help-work_24908-58096.jpg?t=st=1735049647~exp=1735053247~hmac=54ad1f62fff71c00d1ec0280329b7c62df54b6239916bae30afec967a2be630c&w=740",
+      Para: "Provide access to manage your financial resources securely.",
+    },
+  ];
   
   // Fetch current logged-in user
   useEffect(() => {
@@ -455,74 +496,77 @@ const TestingPersonalChat = () => {
         </button>
       </form>
 
-      {isModalOpen && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">Camera Access</h2>
-      <p className="mb-4 text-gray-600">Please grant camera access to use this feature.</p>
-      <div className="flex justify-end space-x-4">
-        <button
-          onClick={closeModal}
-          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => alert("Camera access granted!")} // Replace with actual camera logic
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Proceed
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+     {/* Modal Section */}
+     {isModalOpen && currentInfo && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg">
+            <div className="flex justify-center mb-4">
+              <div
+                className="w-32 h-32 flex items-center justify-center overflow-hidden rounded-md"
+                style={{
+                  boxShadow: "rgb(32 100 204 / 70%) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
+                }}
+              >
+                <img
+                  className="w-full h-full object-cover mb-3"
+                  src={currentInfo.ImgUrl}
+                  alt={currentInfo.title}
+                />
+              </div>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-center">{currentInfo.title} Access</h2>
+            <p className="mb-2 text-gray-600 text-center">{currentInfo.Para}</p>
+            <div className="flex justify-center">
+              <small className="text-red-500 text-xl mb-4 font-mono">Access Soon</small>
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => alert(`${currentInfo.title} granted!`)}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* Navigation buttons */}
       <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
-        <button
-        onClick={handleCameraClick} 
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#41dce4] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-th-large" size={17} ></i>
-          <FaCamera className="text-[#41dce4]"  />Camera
-        </button>
-        
-        <button
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#e46241] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-th-large"></i>
-          <FaImage className="text-[#e46241]" size={17} />Images
-        </button>
-      
-        <button
-          className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#42A5F5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#42A5F5] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-comment-alt"></i>
-          <FaVideo className="text-[#42A5F5]" size={17} /> Video
-        </button>
-      
-        <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FB8C00] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#FB8C00] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-bell"></i>
-          <FaSearchLocation className="text-[#FFB300]" size={17} />Location
-        </button>
-      
-        <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AB47BC] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#AB47BC] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-user-friends"></i>
-          <FaFileAlt className="text-[#AB47BC]" size={17} />File
-        </button>
-      
-        <button
-          className="cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#66BB6A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#66BB6A] h-9 rounded-md px-3"
-        >
-          <i className="fas fa-cog"></i>
-          <FaDollarSign className="text-[#66BB6A]" size={18} />Money
-        </button>
+        {Info.map((info, index) => (
+          <button
+            key={index}
+            onClick={() => openModal(info)}
+            className={`cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 ${
+              index === 0
+                ? "focus-visible:ring-[#FFB300] hover:text-[#41dce4]"
+                : index === 1
+                ? "focus-visible:ring-[#e46241] hover:text-[#e46241]"
+                : index === 2
+                ? "focus-visible:ring-[#42A5F5] hover:text-[#42A5F5]"
+                : index === 3
+                ? "focus-visible:ring-[#FB8C00] hover:text-[#FB8C00]"
+                : index === 4
+                ? "focus-visible:ring-[#AB47BC] hover:text-[#AB47BC]"
+                : "focus-visible:ring-[#66BB6A] hover:text-[#66BB6A]"
+            } h-9 px-3`}
+          >
+            {index === 0 && <FaCamera className="text-[#41dce4]" />}
+            {index === 1 && <FaImage className="text-[#e46241]" />}
+            {index === 2 && <FaVideo className="text-[#42A5F5]" />}
+            {index === 3 && <FaSearchLocation className="text-[#FB8C00]" />}
+            {index === 4 && <FaFileAlt className="text-[#AB47BC]" />}
+            {index === 5 && <FaDollarSign className="text-[#66BB6A]" />}
+            {info.title}
+          </button>
+        ))}
       </div>
     </div>
   );
