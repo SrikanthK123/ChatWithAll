@@ -22,8 +22,12 @@ const TestingPersonalChat = () => {
   const [selectedMenu, setSelectedMenu] = useState(null); // Track which message is selected for options
   const [isMessageFocused, setIsMessageFocused] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null); // For file upload
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  
   // Fetch current logged-in user
   useEffect(() => {
     const fetchUser = async () => {
@@ -224,11 +228,6 @@ const TestingPersonalChat = () => {
       console.error("Error deleting message:", error);
     }
   };
-  
-  
-  
-  
-
   // Edit a message
   const editMessage = (messageId, messageText) => {
     setEditingMessageId(messageId);
@@ -290,6 +289,12 @@ const TestingPersonalChat = () => {
     console.log("Image clicked");
     toast.success("Oops! Coming Soon");
   };
+
+  const handleCameraClick = () => {
+    console.log("Camera clicked");
+    //alert("Allow Camera Permission to use Camera");
+    openModal();
+  }
   
   
 
@@ -449,13 +454,39 @@ const TestingPersonalChat = () => {
           <FaLocationArrow size={18} />
         </button>
       </form>
+
+      {isModalOpen && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg">
+      <h2 className="text-xl font-semibold mb-4">Camera Access</h2>
+      <p className="mb-4 text-gray-600">Please grant camera access to use this feature.</p>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={closeModal}
+          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => alert("Camera access granted!")} // Replace with actual camera logic
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Proceed
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
       {/* Navigation buttons */}
       <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
         <button
+        onClick={handleCameraClick} 
           className="cursor-pointer bg-white  relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#41dce4] h-9 rounded-md px-3"
         >
-          <i className="fas fa-th-large"></i>
-          <FaCamera className="text-[#41dce4]" size={17} />Camera
+          <i className="fas fa-th-large" size={17} ></i>
+          <FaCamera className="text-[#41dce4]"  />Camera
         </button>
         
         <button
