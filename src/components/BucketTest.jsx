@@ -1,93 +1,95 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { storage } from '../lib/appwrite'; // Ensure the storage is imported from your Appwrite setup
+import { account, storage, ID, databases,permission } from '../lib/appwrite';
+import { role } from '../lib/appwrite';
 
 const BucketTest = () => {
-  const [bucketDetails, setBucketDetails] = useState(null); // State to store bucket details
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [deleteStatus, setDeleteStatus] = useState(null); // State to track delete status
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
 
-  // Specify the bucket ID to check
-  const bucketId = '6745c7af000a499a05f5'; // Replace with your actual bucket ID
-useEffect(() => {
-    const result =  storage.listFiles(
-        bucketId,
-        []
-    )
-    console.log(result)
-},[]) 
-
+  // Check user session
   useEffect(() => {
-    const fetchBucketDetails = async () => {
+    const checkSession = async () => {
       try {
-        setLoading(true);
-        setDeleteStatus(null); // Clear delete status when fetching bucket details
-        // Fetch all buckets
-        const response = await storage.listBuckets();
-        // Find the bucket with the specific ID
-        const bucket = response.buckets.find((b) => b.$id === bucketId);
-
-        if (bucket) {
-          setBucketDetails(bucket);
-        } else {
-          setError(`Bucket with ID "${bucketId}" does not exist.`);
-        }
-      } catch (err) {
-        setError(`Failed to fetch buckets: ${err.message}`);
-      } finally {
-        setLoading(false);
+        await account.get(); // Check if user is authenticated
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('User not logged in:', error);
+        setIsAuthenticated(false);
       }
     };
 
-    fetchBucketDetails();
-  }, [bucketId]);
+    checkSession();
+  }, []);
 
-  const handleDeleteBucket = async () => {
+  const handleUpload = async (event) => {
     try {
-      setLoading(true);
-      setError(null);
-      setDeleteStatus(null);
+      // Ensure valid input and file selection
+      if (!event?.target?.files || event.target.files.length === 0) {
+        console.error('No file selected or input is invalid');
+        return;
+      }
 
-      // Delete the bucket
-      await storage.deleteBucket(bucketId);
-      setDeleteStatus(`Bucket with ID "${bucketId}" has been successfully deleted.`);
-      setBucketDetails(null); // Clear the bucket details after deletion
-    } catch (err) {
-      setError(`Failed to delete bucket: ${err.message}`);
-    } finally {
-      setLoading(false);
+      const file = event.target.files[0]; // Get the first selected file
+
+      console.log('Uploading file:', file);
+
+      const response = await storage.createFile(
+        import.meta.env.VITE_BUCKET_IMAGE_SHARE, // Bucket ID from .env
+        ID.unique(), // Generate a unique file ID
+        file,
+        ['write'] // Use "write" permission for file uploads (for authenticated users or specific roles)
+      );
+
+      console.log('File uploaded successfully:', response);
+      setUploadedFile(response.fileId); // Update state with uploaded file ID
+
+      // Create a document with permissions in the database (example usage)
+      const document = {
+        fileId: response.fileId,
+        uploadedBy: account.get() ? account.get().then(user => user.$id) : null, // Add any necessary info
+      };
+
+      const docResponse = await databases.createDocument(
+        import.meta.env.VITE_DATABASE_ID, // Your database ID
+        import.meta.env.VITE_COLLECTION_ID, // Your collection ID
+        ID.unique(), // Generate a unique document ID
+        document,
+        [
+          permission.read('any'),                // Anyone can view this document
+          permission.update('users'),            // Authenticated users can update this document
+          permission.update('admins'),           // Only admins can update this document
+          permission.delete('admins')            // Only admins can delete this document
+        ]
+      );
+
+      console.log('Document created successfully:', docResponse);
+
+    } catch (error) {
+      console.error('Error uploading file or creating document:', error.message);
     }
   };
 
   return (
     <div>
-      <h1>Bucket Details</h1>
-      <div aria-live="polite">
-        {loading && <p>Loading...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {deleteStatus && <p style={{ color: 'green' }}>{deleteStatus}</p>}
-        {!loading && !error && bucketDetails && (
-          <div>
-            <p>
-              <strong>Name:</strong> {bucketDetails.name}
-            </p>
-            <p>
-              <strong>ID:</strong> {bucketDetails.$id}
-            </p>
-            <p>
-              <strong>Created At:</strong> {new Date(bucketDetails.$createdAt).toLocaleString()}
-            </p>
-            <p>
-              <strong>Updated At:</strong> {new Date(bucketDetails.$updatedAt).toLocaleString()}
-            </p>
-            <button onClick={handleDeleteBucket} style={{ marginTop: '1rem', padding: '0.5rem', backgroundColor: 'red', color: 'white' }}>
-              Delete Bucket
-            </button>
-          </div>
-        )}
-        {!loading && !error && !bucketDetails && <p>No bucket details available.</p>}
-      </div>
+      {isAuthenticated ? (
+        <>
+          <h1>File Upload to Appwrite</h1>
+          <input type="file" onChange={handleUpload} />
+          {uploadedFile && (
+            <div>
+              <h2>Uploaded File</h2>
+              <img
+                src={`https://cloud.appwrite.io/v1/storage/buckets/${import.meta.env.VITE_BUCKET_IMAGE_SHARE}/files/${uploadedFile}/view`}
+                alt="Uploaded Preview"
+                style={{ maxWidth: '100%', maxHeight: '400px', marginTop: '20px' }}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <p>Please log in to upload files.</p>
+      )}
     </div>
   );
 };

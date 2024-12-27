@@ -42,8 +42,8 @@ const Leftsidebar = () => {
     const fetchUserData = async () => {
       try {
         const response = await databases.listDocuments(
-          '67389b1e002b13b51f67', // Database ID
-          '6738bb47000e6b648061', // Collection ID
+          import.meta.env.VITE_DATABASE_ID_2, // Database ID
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2, // Collection ID
           [Query.orderDesc('$createdAt')]
         );
         setUserData(response.documents);

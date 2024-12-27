@@ -63,8 +63,8 @@ const IndividualChat = () => {
     const fetchMessages = async () => {
       try {
         const response = await databases.listDocuments(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_MESSAGE,
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           [Query.orderAsc('$createdAt'),
             Query.limit(500)
           ]
@@ -80,7 +80,7 @@ const IndividualChat = () => {
 
   useEffect(() => {
     const unsubscribe = client.subscribe(
-      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_MESSAGE}.documents`,
+      `databases.${import.meta.env.VITE_DATABASE_ID_2}.collections.${import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2}.documents`,
       (response) => {
         if (response.events.includes('databases.*.collections.*.documents.*.create')) {
           // Handle new messages
@@ -125,8 +125,8 @@ const IndividualChat = () => {
 
       try {
         const response = await databases.createDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_MESSAGE,
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           ID.unique(),
           newMessage,
           
@@ -161,8 +161,8 @@ const IndividualChat = () => {
       // Update the existing message
       try {
         const response = await databases.updateDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_MESSAGE,
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           editingMessageId, // Use the editing message ID
           payload
         );
@@ -184,8 +184,8 @@ const IndividualChat = () => {
       // Create a new message
       try {
         const response = await databases.createDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          '6738bb47000e6b648061',
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           ID.unique(),
           payload
         );
@@ -207,7 +207,7 @@ const IndividualChat = () => {
 
   const handleDeleteMessage = async (messageId) => {
     try {
-      await databases.deleteDocument(import.meta.env.VITE_DATABASE_ID, '6738bb47000e6b648061', messageId);
+      await databases.deleteDocument(import.meta.env.VITE_DATABASE_ID_2, import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2, messageId);
     } catch (error) {
       console.error('Error deleting message:', error);
     }
@@ -224,8 +224,8 @@ const IndividualChat = () => {
     if (messageBody.trim()) {
       try {
         const response = await databases.updateDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          '6738bb47000e6b648061',
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           messageId,
           { body: messageBody, edited: true } // Add the updated fields
         );
@@ -278,7 +278,7 @@ const IndividualChat = () => {
         </div>
       )}
       <div
-        className={`relative max-w-[80%] p-3 shadow-md ${isCurrentUser ? 'rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto' : 'rounded-tr-lg rounded-bl-lg rounded-br-lg  bg-gray-200 text-black'}`}
+        className={`relative max-w-[80%] p-3 mx-5 shadow-md ${isCurrentUser ? 'rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto' : 'rounded-tr-lg rounded-bl-lg rounded-br-lg  bg-gray-200 text-black'}`}
       >
         <span style={{ fontSize: '10px' }}>
           {new Date(msg.$createdAt).toLocaleDateString()}

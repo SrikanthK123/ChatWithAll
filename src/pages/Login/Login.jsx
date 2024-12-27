@@ -20,7 +20,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('VITE_PROJECT_ID', import.meta.env.VITE_PROJECT_ID);
+    console.log('VITE_PROJECT_ID', import.meta.env.VITE_PROJECT_ID_2);
     console.log('VITE_ENDPOINT', import.meta.env.VITE_ENDPOINT);
     console.log(import.meta.env);
   }, []);

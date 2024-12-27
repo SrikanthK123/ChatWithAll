@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage, FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
@@ -24,6 +24,16 @@ const TestingPersonalChat = () => {
   const [selectedFile, setSelectedFile] = useState(null); // For file upload
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentInfo, setCurrentInfo] = useState(null);;
+  const [error, setError] = useState(null);
+  const [image, setImage] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [isDownloaded, setDownloaded] = useState(false); // State to track if the image is downloaded
+  const [modalImage, setModalImage] = useState("");
+  const [downloadedImages, setDownloadedImages] = useState({});
+  const [ImageModalOpen, setImageModalOpen] = useState(false);
+  const [viewedImages, setViewedImages] = useState({});
 
   
   const openModal = (info) => {
@@ -97,8 +107,8 @@ const TestingPersonalChat = () => {
     setLoading(true);
     try {
       const messagesForSender = await databases.listDocuments(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
         [
           Query.equal("senderName", user.name),
           Query.equal("receiverName", username),
@@ -106,8 +116,8 @@ const TestingPersonalChat = () => {
       );
 
       const messagesForReceiver = await databases.listDocuments(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
         [
           Query.equal("senderName", username),
           Query.equal("receiverName", user.name),
@@ -141,7 +151,7 @@ const TestingPersonalChat = () => {
     getMessages();
 
     const unsubscribe = client.subscribe(
-      `databases.${import.meta.env.VITE_DATABASE_ID}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT}.documents`,
+      `databases.${import.meta.env.VITE_DATABASE_ID_2}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2}.documents`,
       (response) => {
         const newMessage = response.payload;
         const event = response.events[0];
@@ -200,8 +210,8 @@ const TestingPersonalChat = () => {
       if (editingMessageId) {
         // Update existing message
         await databases.updateDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
           editingMessageId,
           { PersonalMessage: [messageBody.trim()] }
         );
@@ -217,8 +227,8 @@ const TestingPersonalChat = () => {
       } else {
         // Create a new message
         const createdMessage = await databases.createDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
           ID.unique(),
           newMessage
         );
@@ -252,8 +262,8 @@ const TestingPersonalChat = () => {
     try {
       // Delete the message from the database
       await databases.deleteDocument(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
         messageId
       );
   
@@ -309,8 +319,8 @@ const TestingPersonalChat = () => {
     try {
       // Create the "Hello!" message directly without handleSubmit
       const createdMessage = await databases.createDocument(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT,
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
         ID.unique(),
         newMessage
       );
@@ -337,7 +347,166 @@ const TestingPersonalChat = () => {
     openModal();
   }
   
+   // Handle image selection
+   const handleImageChange = (event) => {
+    setImage(event.target.files[0]);
+    setSuccess(null);
+    setError(null);
+  };
+// Handle image upload
+const handleUpload = async (event) => {
+  event.preventDefault();
+
+  if (!image) {
+    setError('Please select an image first.');
+    return;
+  }
+
+  setUploading(true);
+  setError(null);
+
+  try {
+    const response = await storage.createFile(
+      '67625c290014521446c8', // Your BucketID
+      ID.unique(),           // Unique file ID
+      image                  // The file itself
+    );
+
+    const fileId = response.$id;
+    const fileUrl = await storage.getFileView('67625c290014521446c8', fileId);
+
+    await saveImageReference(fileId, fileUrl.href);
+
+    // Add the new image URL to the messages state
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        senderName: user.name,
+        receiverName: username,
+        timestamp: new Date().toISOString(),
+        imageUrl: [fileUrl.href],
+        $id: ID.unique(),
+      },
+    ]);
+
+    setUploading(false);
+    setSuccess('Image uploaded successfully!');
+  } catch (err) {
+    setUploading(false);
+    setError('Error uploading image: ' + err.message);
+    console.error('Upload error:', err);
+  }
+};
+
+// Save or update file reference in the database
+const saveImageReference = async (fileId, imageUrl) => {
+  try {
+    const existingDocument = messages.find((msg) => msg.senderId === user.id);
+
+    if (existingDocument) {
+      // Update the existing document
+      const updatedImageUrls = [...existingDocument.imageUrl, imageUrl];
+
+      await databases.updateDocument(
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
+        existingDocument.$id,
+        { imageUrl: updatedImageUrls }
+      );
+
+      console.log('Updated image reference in existing document');
+    } else {
+      // Create a new document if none exists
+      const newDocument = {
+        senderName: user.name,
+        receiverName: username, // Set appropriate receiver Name
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        imageUrl: [imageUrl],
+        fileId: fileId,
+      };
+
+      await databases.createDocument(
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
+        ID.unique(),
+        newDocument
+      );
+
+      console.log('Created new document with image reference');
+    }
+  } catch (err) {
+    setError('Error saving image reference: ' + err.message);
+    console.error('Error saving image reference:', err);
+  }
+};
+
+// Fetch messages with images (useEffect)
+useEffect(() => {
+  const fetchMessagesWithImages = async () => {
+    try {
+      const response = await databases.listDocuments(
+        import.meta.env.VITE_DATABASE_ID_2,
+        import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2
+      );
   
+      // Ensure `imageUrl` is defined and is an array for all documents
+      const updatedMessages = response.documents.map((message) => ({
+        ...message,
+        imageUrl: message.imageUrl || [],
+      }));
+  
+      console.log('Fetched messages with images:', updatedMessages);
+      return updatedMessages;
+    } catch (error) {
+      console.error('Error fetching messages with images:', error);
+      return [];
+    }
+  };
+  
+
+  fetchMessagesWithImages();
+}, []);
+
+// Delete Image
+// Function to download the image
+const downloadImage = (imageUrl) => {
+  const link = document.createElement('a');
+  link.href = imageUrl;
+  link.download = 'downloaded-image';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Function to clear the image (for the current user)
+const clearImage = async (messageId) => {
+  try {
+    const updatedMessages = messages.map((msg) =>
+      msg.$id === messageId ? { ...msg, imageUrl: [] } : msg
+    );
+    setMessages(updatedMessages);
+    console.log(`Image cleared for message ID: ${messageId}`);
+  } catch (error) {
+    console.error('Error clearing image:', error);
+  }
+};
+const handleDownload = (url) => {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "downloaded_image"; // You can modify the filename here.
+  link.click();
+  
+};
+
+const openImageModal = (url) => {
+  setModalImage(url);
+  ImageModalOpen(true);
+};
+const closeModalImage = () => {
+  setModalImage("");
+  ImageModalOpen(false);
+};
 
   return (
     <div className="chat-container flex flex-col h-screen w-screen bg-slate-200">
@@ -390,111 +559,195 @@ const TestingPersonalChat = () => {
           </div>
         ) : (
           <div className="messages-container space-y-4">
-            {messages.map((message) => {
-              const isCurrentUser = message.senderName === user?.name;
-              return (
+          {messages.map((message) => {
+            const isCurrentUser = message.senderName === user?.name;
+            const isImageMessage = message.imageUrl && message.imageUrl.length > 0;
+        
+            return (
+              <div
+                key={message.$id}
+                className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
+              >
                 <div
-                  key={message.$id}
-                  className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
+                  className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
+                    isCurrentUser
+                      ? "bg-blue-500 text-white self-end rounded-tr-none"
+                      : "bg-gray-100 text-black self-start rounded-tl-none"
+                  } relative`}
                 >
-                 
-                  <div
-                    className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
-                      isCurrentUser
-                        ? "bg-blue-500 text-white self-end rounded-tr-none"
-                        : "bg-gray-100 text-black self-start rounded-tl-none"
-                    } relative`}
-                  >
-                    {isCurrentUser && (
+                  {/* Message Time */}
+                  <span className={`message-time text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
+                    {new Date(message.$createdAt).toLocaleDateString()}
+                  </span>
+        
+                  {/* Message Content */}
+                  <div className="message-content">
+                    <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
+                      {isCurrentUser ? `${user?.name} (You)` : message.senderName}
+                    </p>
+                    {!isImageMessage && <p className="text-[16px]">{message.PersonalMessage}</p>}
+        
+                    {/* Display Image If Exists */}
+                    {isImageMessage && (
+                      <div className="image-container mt-2 relative">
+                        {message.imageUrl.map((url, index) => (
+                          <div key={index} className="relative">
+                            {/* Image */}
+                            <img
+                              src={url}
+                              alt={`Uploaded ${index + 1}`}
+                              className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
+                                !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
+                              }`}
+                              onClick={() => openImageModal(url)}
+                            />
+        
+                            {/* See Image Button */}
+                            {!isCurrentUser && !downloadedImages[url] && (
+                              <button
+                                onClick={() => handleDownload(url)}
+                                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm font-semibold rounded-lg"
+                              >
+                                See Image
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+        
+                  {/* Options for current user (edit and delete) */}
+                  {isCurrentUser && (
+                    <div className="absolute top-1 right-1 text-white hover:text-black">
+                      {/* Edit and Delete options */}
                       <button
                         onClick={() => toggleMenu(message.$id)}
-                        className="absolute top-1 right-1 text-white hover:text-black"
+                        className="text-white hover:text-black"
                       >
                         <FaEllipsisV size={12} />
                       </button>
-                    )}
-
-                    {selectedMenu === message.$id && (
-                      <div
-                        className="message-options absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30"
-                        style={{ minWidth: "120px" }}
-                      >
-                        <button
-                          onClick={() => deleteMessage(message.$id)}
-                          className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+        
+                      {/* Menu Options */}
+                      {selectedMenu === message.$id && (
+                        <div
+                          className="absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30"
+                          style={{ minWidth: "120px" }}
                         >
-                          <FaTrash size={12} />
-                          <span>Delete</span>
-                        </button>
-                        <button
-                          onClick={() => editMessage(message.$id, message.PersonalMessage[0])}
-                          className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
-                        >
-                          <FaImage size={12} />
-                          <span>Edit</span>
-                        </button>
-                      </div>
-                    )}
-
-                    <span className={`message-time text-[10px] text-black ${isCurrentUser ? "text-white" : "text-black"}`}>
-                      {new Date(message.$createdAt).toLocaleDateString()}
-                    </span>
-
-                    <div className="message-content " style={{
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    whiteSpace: 'pre-wrap',
-}}>
-                      <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
-                        {isCurrentUser ? `${user?.name} (You)` : message.senderName}
-                      </p>
-                      <p className="text-[16px]">{message.PersonalMessage}</p>
-                      <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
-                        {formatTime(new Date(message.timestamp))}
-                      </small>
+                          <button
+                            onClick={() => deleteMessage(message.$id)} // Implement deleteMessage function
+                            className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+                          >
+                            <FaTrash size={12} />
+                            <span>Delete</span>
+                          </button>
+        
+                          {/* Edit option only for text messages */}
+                          {!isImageMessage && (
+                            <button
+                              onClick={() => editMessage(message.$id, message.PersonalMessage)} // Implement editMessage function
+                              className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+                            >
+                              <FaEdit size={12} />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
+        
+                  {/* Timestamp */}
+                  <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </small>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        
+          {/* Image Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+              <div className="relative">
+                <button
+                  className="absolute top-2 right-2 text-white bg-gray-800 hover:bg-gray-900 rounded-full p-1"
+                  onClick={closeModal}
+                >
+                  ✕
+                </button>
+                <img
+                  src={modalImage}
+                  alt="Modal View"
+                  className="max-w-[90vw] max-h-[90vh] rounded-lg"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
+
+  )}
       </div>
 
       <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-4 bg-[#001529] justify-center">
-        <textarea
-          type="text"
-          value={messageBody}
-          onFocus={() => setIsMessageFocused(true)}
-          onBlur={() => setIsMessageFocused(false)}
-          onChange={(e) => setMessageBody(e.target.value)}
-          placeholder="Type your message..."
-          className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
-        ></textarea>
+  <textarea
+    type="text"
+    value={messageBody}
+    onFocus={() => setIsMessageFocused(true)}
+    onBlur={() => setIsMessageFocused(false)}
+    onChange={(e) => setMessageBody(e.target.value)}
+    placeholder="Type your message..."
+    className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
+  ></textarea>
 
-        <button
-          type="button"
-          onClick={() => setShowPicker(!showPicker)}
-          className="emoji-button hover:bg-gray-400 text-white rounded-lg px-1 py-1"
-        >
-          😀
-        </button>
-      
+  <button
+    type="button"
+    onClick={() => setShowPicker(!showPicker)}
+    className="emoji-button hover:bg-gray-400 text-white rounded-lg px-1 py-1"
+  >
+    😀
+  </button>
 
-        {showPicker && (
-          <div className="emoji-picker absolute bottom-16 right-4 z-50">
-            <EmojiPicker onEmojiClick={handleEmojiClick} value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
-          </div>
-        )}
+  {showPicker && (
+    <div className="emoji-picker absolute bottom-16 right-4 z-50">
+      <EmojiPicker onEmojiClick={handleEmojiClick} value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+    </div>
+  )}
+  {/* Hidden File Input for Image Upload */}
+  <input
+      type="file"
+      accept="image/*"
+      id="image-upload"
+      onChange={handleImageChange} // Handle file change here
+      className="hidden" // Hides the file input
+    />
+      <button onClick={handleUpload} disabled={uploading} className="text-white">
+        {uploading ? 'Uploading...' : 'Upload Image'}
+      </button>
 
-        <button
-          type="submit"
-          className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
-        >
-          <FaLocationArrow size={18} />
-        </button>
-      </form>
+     
+
+  {/* Image Upload Button */}
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleUpload }
+    className="hidden"
+    id="image-upload"
+  />
+  <label htmlFor="image-upload" className="cursor-pointer">
+    <FaImage size={18} className="text-white" />
+  </label>
+
+  <button
+    type="submit"
+    className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
+  >
+    <FaLocationArrow size={18} />
+  </button>
+</form>
+
 
      {/* Modal Section */}
      {isModalOpen && currentInfo && (

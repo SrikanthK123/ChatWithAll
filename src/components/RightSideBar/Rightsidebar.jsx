@@ -5,6 +5,8 @@ import { useUser } from "../../UseContext";
 import { Link, useNavigate } from "react-router-dom";
 import { account, storage } from "../../lib/appwrite";
 import PropTypes from "prop-types";
+import { ID,Permission } from "appwrite";
+import { Role } from "appwrite";
 
 const Rightsidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,40 +25,39 @@ const Rightsidebar = () => {
 
   const MediaImages = [
     {
-      Medimage:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
+      Medimage: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMGRpZ2l0YWwlMjBpbWFnZXxlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80",
     },
     {
-      Medimage:"https://img.freepik.com/free-photo/modern-stationary-collection-arrangement_23-2149309625.jpg?t=st=1734773138~exp=1734776738~hmac=e70012bdd6890a76732722601fb8c1446dccff8444fbab39685066600eb73478&w=1060"
+      Medimage: "https://img.freepik.com/free-photo/modern-stationary-collection-arrangement_23-2149309625.jpg?t=st=1734773138~exp=1734776738~hmac=e70012bdd6890a76732722601fb8c1446dccff8444fbab39685066600eb73478&w=1060",
     },
     {
-      Medimage:'https://img.freepik.com/free-vector/reporter-interviewing-celebrities-successful-people_74855-6633.jpg?t=st=1734792490~exp=1734796090~hmac=38856a93738b6d19fe980077353a69b486a02939d70057873716fb1cbe89a10e&w=1380'
+      Medimage: "https://img.freepik.com/free-vector/reporter-interviewing-celebrities-successful-people_74855-6633.jpg?t=st=1734792490~exp=1734796090~hmac=38856a93738b6d19fe980077353a69b486a02939d70057873716fb1cbe89a10e&w=1380",
     },
-  {
-    Medimage:'https://img.freepik.com/free-photo/cascade-boat-clean-china-natural-rural_1417-1356.jpg?t=st=1734773059~exp=1734776659~hmac=625dc4debb78d29f39c7ca8cb428ba4c835c4f9f020c44e600ff62b7a63c72db&w=1060'
-  }
+    {
+      Medimage: "https://img.freepik.com/free-photo/cascade-boat-clean-china-natural-rural_1417-1356.jpg?t=st=1734773059~exp=1734776659~hmac=625dc4debb78d29f39c7ca8cb428ba4c835c4f9f020c44e600ff62b7a63c72db&w=1060",
+    },
   ];
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const checkSession = async () => {
       try {
-        const userData = await account.get();
-        setUserData(userData);
-
-        const storedDescription = localStorage.getItem(`description_${userData.$id}`);
+        const currentUser = await account.get(); // Fetch current user session
+        setUserData(currentUser);
+        console.log("RightSideBar", currentUser);
+        const storedDescription = localStorage.getItem(`description_${currentUser.$id}`);
         if (storedDescription) {
           setDescription(storedDescription);
         } else {
-          localStorage.setItem(`description_${userData.$id}`, description);
+          localStorage.setItem(`description_${currentUser.$id}`, description);
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("User not logged in:", error);
+        setUserData(null);
       }
     };
 
-      fetchUserData();
-    
-  }, [user]);
+    checkSession();
+  }, []);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -88,38 +89,69 @@ const Rightsidebar = () => {
 
   const saveDescription = () => {
     setIsEditingDescription(false);
-    localStorage.setItem(`description_${user.$id}`, description);
-  };
-
-  const handleUploadClick = async () => {
-    if (!user) {
-      alert("User is not logged in or data is not loaded.");
-      return;
+    if (userData) {
+      localStorage.setItem(`description_${userData.$id}`, description);
     }
-
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) {
-        alert("No file selected. Please try again.");
+  };
+  const handleUploadClick = async () => {
+    try {
+      const userData = await account.get(); // Check if user is authenticated
+      if (!userData) {
+        alert("User is not logged in. Please log in first.");
         return;
       }
-
-      try {
-        const bucketId = "6745c7af000a499a05f5"; // Replace with your actual bucket ID
-        const fileId = await storage.createFile(bucketId, file);
-        console.log("File uploaded successfully:", fileId);
-      } catch (error) {
-        console.error("File upload failed:", error);
-        alert("File upload failed. Please try again.");
-      }
-    };
-
-    fileInput.click();
+  
+      // Proceed with file upload if the user is authenticated
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+  
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          alert("No file selected. Please try again.");
+          return;
+        }
+  
+        try {
+          const bucketId = import.meta.env.VITE_BUCKET_IMAGE_SHARE; // Replace with your bucket ID
+          const uniqueFileId = ID.unique(); // Generate a unique file ID
+          console.log("BucketID", bucketId);
+  
+          // Correct permission objects
+          const permissions = [
+            Permission.read(Role.any()),  // Anyone can view this document
+            Permission.update(Role.team("writers")),  // Writers can update this document
+            Permission.update(Role.team("admin")),  // Admins can update this document
+            Permission.delete(Role.user(userData.$id)), // Only the uploading user can delete this document
+            Permission.delete(Role.team("admin")),  // Admins can delete this document
+          ];
+          
+  
+          const response = await storage.createFile(bucketId, uniqueFileId, file, permissions);
+          console.log("File uploaded successfully:", response);
+        } catch (error) {
+          console.error("File upload failed:", error.message);
+          console.error("Full error details:", error);
+          alert("File upload failed. Please try again.");
+        }
+      };
+  
+      fileInput.click();
+    } catch (error) {
+      console.error("User not authenticated:", error.message);
+      console.error("Full error details:", error);
+      alert("You must be logged in to upload files.");
+    }
   };
+  
+  
+  
+  
+  useEffect(() => {
+    
+    console.log("BucketID",import.meta.env.VITE_BUCKET_IMAGE_SHARE);
+  }, []);
 
   const handleLogout = async () => {
     try {
