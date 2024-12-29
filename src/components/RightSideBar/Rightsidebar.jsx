@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, createContext, useContext } from "react";
 import { FaCog, FaBell, FaUser, FaTimes, FaPen } from "react-icons/fa";
 import { useUser } from "../../UseContext";
 import { Link, useNavigate } from "react-router-dom";
-import { account, storage } from "../../lib/appwrite";
+import { account, storage, databases } from "../../lib/appwrite";
 import PropTypes from "prop-types";
-import { ID,Permission } from "appwrite";
-import { Role } from "appwrite";
+import { ID, Permission, Role } from "appwrite";
+import toast from "react-hot-toast";
+
 
 const Rightsidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,10 +19,13 @@ const Rightsidebar = () => {
   const [description, setDescription] = useState("Hey there! I am using Chat-app");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [userData, setUserData] = useState(null);
+  
 
   const buttonRef = useRef(null);
-  const { user, logoutUser } = useUser();
+  const { user,loginUser, logoutUser } = useUser();
   const navigate = useNavigate();
+  const UserContext = createContext()
+  const ProfileDetail = () => useContext(UserContext);
 
   const MediaImages = [
     {
@@ -41,17 +45,22 @@ const Rightsidebar = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const currentUser = await account.get(); // Fetch current user session
-        setUserData(currentUser);
-        console.log("RightSideBar", currentUser);
-        const storedDescription = localStorage.getItem(`description_${currentUser.$id}`);
-        if (storedDescription) {
-          setDescription(storedDescription);
+        const currentUser = await account.get();
+        if (currentUser) {
+          setUserData(currentUser);
+
+          // Fetch stored description and profile picture
+          const storedDescription = localStorage.getItem(`description_${currentUser.$id}`);
+          const profilePicture = currentUser.prefs?.profilePicture || null;
+
+          if (storedDescription) setDescription(storedDescription);
+          if (profilePicture) setUserData((prev) => ({ ...prev, profilePicture }));
         } else {
-          localStorage.setItem(`description_${currentUser.$id}`, description);
+          console.log("User not logged in.");
+          setUserData(null);
         }
       } catch (error) {
-        console.error("User not logged in:", error);
+        console.error("User session fetch error:", error);
         setUserData(null);
       }
     };
@@ -93,15 +102,15 @@ const Rightsidebar = () => {
       localStorage.setItem(`description_${userData.$id}`, description);
     }
   };
+
   const handleUploadClick = async () => {
     try {
-      const userData = await account.get(); // Check if user is authenticated
-      if (!userData) {
+      const currentUser = await account.get();
+      if (!currentUser) {
         alert("User is not logged in. Please log in first.");
         return;
       }
   
-      // Proceed with file upload if the user is authenticated
       const fileInput = document.createElement("input");
       fileInput.type = "file";
       fileInput.accept = "image/*";
@@ -114,45 +123,57 @@ const Rightsidebar = () => {
         }
   
         try {
-          const bucketId = import.meta.env.VITE_BUCKET_IMAGE_SHARE; // Replace with your bucket ID
-          const uniqueFileId = ID.unique(); // Generate a unique file ID
-          console.log("BucketID", bucketId);
+          const bucketId = import.meta.env.VITE_SECOND_ACCOUNT_BUCKET_2;
   
-          // Correct permission objects
+          if (!bucketId) {
+            throw new Error("Bucket ID is missing");
+          }
+  
+          const uniqueFileId = ID.unique();
           const permissions = [
-            Permission.read(Role.any()),  // Anyone can view this document
-            Permission.update(Role.team("writers")),  // Writers can update this document
-            Permission.update(Role.team("admin")),  // Admins can update this document
-            Permission.delete(Role.user(userData.$id)), // Only the uploading user can delete this document
-            Permission.delete(Role.team("admin")),  // Admins can delete this document
+            Permission.read(Role.any()),
+            Permission.update(Role.user(currentUser.$id)),
+            Permission.delete(Role.user(currentUser.$id)),
           ];
-          
   
-          const response = await storage.createFile(bucketId, uniqueFileId, file, permissions);
-          console.log("File uploaded successfully:", response);
+          const response = await storage.createFile(bucketId, uniqueFileId, file, permissions, currentUser.$id, currentUser.name);
+  
+          const imageUrl = storage.getFileView(bucketId, uniqueFileId);
+  
+          // Update user data locally
+          setUserData((prev) => ({ ...prev, profilePicture: imageUrl }));
+  
+          // Update user preferences with the new profile picture URL
+          await account.updatePrefs({ profilePicture: imageUrl });
+  
+          // Create the full response object
+          const fullResponse = {
+            ...response,
+            username: currentUser.name,
+            userId: currentUser.$id,
+            profilePicture: imageUrl,
+          };
+  
+          // Update global context with fullResponse
+          loginUser(fullResponse);
+  
+          toast.success("Profile picture updated successfully.");
+  
+          console.log("Full Response with User Info:", JSON.stringify(fullResponse, null, 2));
         } catch (error) {
           console.error("File upload failed:", error.message);
-          console.error("Full error details:", error);
-          alert("File upload failed. Please try again.");
         }
       };
   
       fileInput.click();
     } catch (error) {
       console.error("User not authenticated:", error.message);
-      console.error("Full error details:", error);
       alert("You must be logged in to upload files.");
     }
   };
   
   
   
-  
-  useEffect(() => {
-    
-    console.log("BucketID",import.meta.env.VITE_BUCKET_IMAGE_SHARE);
-  }, []);
-
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -188,9 +209,10 @@ const Rightsidebar = () => {
         <div className="flex flex-col items-center justify-center p-4 mt-12 relative">
           <div className="relative group w-32 h-32">
             <img
-              src="https://img.freepik.com/free-photo/photo-handsome-unshaven-guy-looks-with-pleasant-expression-directly-camera_176532-8164.jpg"
+              src={userData?.profilePicture || "https://img.freepik.com/free-vector/young-man-orange-hoodie_1308-175788.jpg?t=st=1735471549~exp=1735475149~hmac=e474627388c1219724fb217d7d9c9ae4391189a4b27ed65018ae352fb144fa39&w=360"}
               alt="Profile"
               className="rounded-full w-full h-full object-cover shadow-md"
+              style={{boxShadow:'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px'}}
             />
             <button
               className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full"

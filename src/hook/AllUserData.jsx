@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { databases } from '../lib/appwrite';
 
-const DATABASE_ID = '67389b1e002b13b51f67';
-const COLLECTION_ID = '67389b43003b7770ee97';
+const DATABASE_ID = import.meta.env.VITE_DATABASE_ID_2;
+const COLLECTION_ID = import.meta.env.VITE_COLLECTION_ID_SIGNUP_2;
 
 export const AlluseUsers = () => {
   const [users, setUsers] = useState([]);

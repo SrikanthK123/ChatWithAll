@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
@@ -34,6 +34,9 @@ const TestingPersonalChat = () => {
   const [downloadedImages, setDownloadedImages] = useState({});
   const [ImageModalOpen, setImageModalOpen] = useState(false);
   const [viewedImages, setViewedImages] = useState({});
+  const [hideButton, setHideButton] = useState(false);
+const [isImageSelected, setIsImageSelected] = useState(false);
+
 
   
   const openModal = (info) => {
@@ -349,54 +352,57 @@ const TestingPersonalChat = () => {
   
    // Handle image selection
    const handleImageChange = (event) => {
-    setImage(event.target.files[0]);
+    const selectedImage = event.target.files[0];
+    setImage(selectedImage);
+    setIsImageSelected(!!selectedImage); // Update the state based on selection
     setSuccess(null);
     setError(null);
   };
-// Handle image upload
-const handleUpload = async (event) => {
-  event.preventDefault();
-
-  if (!image) {
-    setError('Please select an image first.');
-    return;
-  }
-
-  setUploading(true);
-  setError(null);
-
-  try {
-    const response = await storage.createFile(
-      '67625c290014521446c8', // Your BucketID
-      ID.unique(),           // Unique file ID
-      image                  // The file itself
-    );
-
-    const fileId = response.$id;
-    const fileUrl = await storage.getFileView('67625c290014521446c8', fileId);
-
-    await saveImageReference(fileId, fileUrl.href);
-
-    // Add the new image URL to the messages state
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        senderName: user.name,
-        receiverName: username,
-        timestamp: new Date().toISOString(),
-        imageUrl: [fileUrl.href],
-        $id: ID.unique(),
-      },
-    ]);
-
-    setUploading(false);
-    setSuccess('Image uploaded successfully!');
-  } catch (err) {
-    setUploading(false);
-    setError('Error uploading image: ' + err.message);
-    console.error('Upload error:', err);
-  }
-};
+  
+  const handleUpload = async (event) => {
+    event.preventDefault();
+  
+    if (!image) {
+      setError('Please select an image first.');
+      return;
+    }
+  
+    setUploading(true);
+    setError(null);
+  
+    try {
+      const response = await storage.createFile(
+        '67625c290014521446c8', // Your BucketID
+        ID.unique(),           // Unique file ID
+        image                  // The file itself
+      );
+  
+      const fileId = response.$id;
+      const fileUrl = await storage.getFileView('67625c290014521446c8', fileId);
+  
+      await saveImageReference(fileId, fileUrl.href);
+  
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          senderName: user.name,
+          receiverName: username,
+          timestamp: new Date().toISOString(),
+          imageUrl: [fileUrl.href],
+          $id: ID.unique(),
+        },
+      ]);
+  
+      setUploading(false);
+      setSuccess('Image uploaded successfully!');
+      setIsImageSelected(false); // Reset the state
+    } catch (err) {
+      setUploading(false);
+      setError('Error uploading image: ' + err.message);
+      console.error('Upload error:', err);
+    }
+  };
+  
 
 // Save or update file reference in the database
 const saveImageReference = async (fileId, imageUrl) => {
@@ -571,7 +577,7 @@ const closeModalImage = () => {
                 <div
                   className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
                     isCurrentUser
-                      ? "bg-blue-500 text-white self-end rounded-tr-none"
+                      ? "bg-[#18b4e4] text-white self-end rounded-tr-none"
                       : "bg-gray-100 text-black self-start rounded-tl-none"
                   } relative`}
                 >
@@ -585,7 +591,7 @@ const closeModalImage = () => {
                     <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
                       {isCurrentUser ? `${user?.name} (You)` : message.senderName}
                     </p>
-                    {!isImageMessage && <p className="text-[16px]">{message.PersonalMessage}</p>}
+                    {!isImageMessage && <p className="text-[16px] py-1">{message.PersonalMessage}</p>}
         
                     {/* Display Image If Exists */}
                     {isImageMessage && (
@@ -659,8 +665,8 @@ const closeModalImage = () => {
         
                   {/* Timestamp */}
                   <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </small>
+            {formatTime(new Date(message.timestamp))}
+          </small>
                 </div>
               </div>
             );
@@ -685,68 +691,69 @@ const closeModalImage = () => {
             </div>
           )}
         </div>
-        
-
   )}
       </div>
-
       <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-4 bg-[#001529] justify-center">
-  <textarea
-    type="text"
-    value={messageBody}
-    onFocus={() => setIsMessageFocused(true)}
-    onBlur={() => setIsMessageFocused(false)}
-    onChange={(e) => setMessageBody(e.target.value)}
-    placeholder="Type your message..."
-    className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
-  ></textarea>
+    <textarea
+      type="text"
+      value={messageBody}
+      onFocus={() => setIsMessageFocused(true)}
+      onBlur={() => setIsMessageFocused(false)}
+      onChange={(e) => setMessageBody(e.target.value)}
+      placeholder="Type your message..."
+      className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
+    ></textarea>
 
-  <button
-    type="button"
-    onClick={() => setShowPicker(!showPicker)}
-    className="emoji-button hover:bg-gray-400 text-white rounded-lg px-1 py-1"
-  >
-    😀
-  </button>
+    <button
+      type="button"
+      onClick={() => setShowPicker(!showPicker)}
+      className="emoji-button hover:bg-gray-400 text-white rounded-lg px-1 py-1"
+    >
+      😀
+    </button>
 
-  {showPicker && (
-    <div className="emoji-picker absolute bottom-16 right-4 z-50">
-      <EmojiPicker onEmojiClick={handleEmojiClick} value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
-    </div>
-  )}
-  {/* Hidden File Input for Image Upload */}
-  <input
+    {showPicker && (
+      <div className="emoji-picker absolute bottom-16 right-4 z-50">
+        <EmojiPicker onEmojiClick={handleEmojiClick} />
+      </div>
+    )}
+
+    {/* Hidden File Input for Image Upload */}
+    <input
       type="file"
       accept="image/*"
       id="image-upload"
-      onChange={handleImageChange} // Handle file change here
-      className="hidden" // Hides the file input
+      onChange={handleImageChange}
+      className="hidden"
     />
-      <button onClick={handleUpload} disabled={uploading} className="text-white">
-        {uploading ? 'Uploading...' : 'Upload Image'}
-      </button>
+    <label htmlFor="image-upload" className="cursor-pointer ">
+      <FaImage size={18} className="text-white hover:text-[#5fc9f3]" />
+    </label>
 
-     
-
-  {/* Image Upload Button */}
-  <input
-    type="file"
-    accept="image/*"
-    onChange={handleUpload }
-    className="hidden"
-    id="image-upload"
-  />
-  <label htmlFor="image-upload" className="cursor-pointer">
-    <FaImage size={18} className="text-white" />
-  </label>
-
+    {/* Conditionally Display Upload Button */}
+    {isImageSelected && (
   <button
-    type="submit"
-    className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10  rounded-full flex items-center justify-center"
+    onClick={handleUpload}
+    disabled={uploading}
+    className="text-white px-3 py-2 rounded flex items-center justify-center gap-2"
   >
-    <FaLocationArrow size={18} />
+    {uploading ? (
+      <div className="loading-circle"></div> /* Spinner only when uploading */
+    ) : (
+      <FaUpload className="UploadMovement  py-1 rounded-sm" size={25} />
+    )}
   </button>
-</form>
+)}
+
+
+
+    <button
+      type="submit"
+      className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center"
+    >
+      <FaLocationArrow size={18} />
+    </button>
+  </form>
 
 
      {/* Modal Section */}
@@ -792,12 +799,12 @@ const closeModalImage = () => {
 
 
       {/* Navigation buttons */}
-      <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
+      <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-3 bg-slate-900">
         {Info.map((info, index) => (
           <button
             key={index}
             onClick={() => openModal(info)}
-            className={`cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 ${
+            className={`cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 ${
               index === 0
                 ? "focus-visible:ring-[#FFB300] hover:text-[#41dce4]"
                 : index === 1
@@ -811,8 +818,8 @@ const closeModalImage = () => {
                 : "focus-visible:ring-[#66BB6A] hover:text-[#66BB6A]"
             } h-9 px-3`}
           >
-            {index === 0 && <FaCamera className="text-[#41dce4]" />}
-            {index === 1 && <FaImage className="text-[#e46241]" />}
+            {index === 0 && <FaCamera  className="text-[#41dce4]"  />}
+            {index === 1 && <FaImage htmlFor="image-upload"  className="text-[#e46241] cursor-pointer" />}
             {index === 2 && <FaVideo className="text-[#42A5F5]" />}
             {index === 3 && <FaSearchLocation className="text-[#FB8C00]" />}
             {index === 4 && <FaFileAlt className="text-[#AB47BC]" />}

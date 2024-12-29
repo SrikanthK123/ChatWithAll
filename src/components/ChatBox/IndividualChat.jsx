@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { FaImage, FaTrash, FaEllipsisV ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile, FaSearchLocation, FaAudible, FaAudioDescription, FaCommentDots, FaMicrophone, FaCog, FaVideo, FaDollarSign } from 'react-icons/fa'; 
+import { FaImage, FaTrash,FaEdit, FaEllipsisV,FaUpload ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile, FaSearchLocation, FaAudible, FaAudioDescription, FaCommentDots, FaMicrophone, FaCog, FaVideo, FaDollarSign } from 'react-icons/fa'; 
 import { useUser } from '../../UseContext';
 import { account, client, databases,storage } from "../../lib/appwrite";
 import { AlluseUsers } from '../../hook/AllUserData';
 import { ID, Query } from 'appwrite';
 import EmojiPicker from 'emoji-picker-react';
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
+
 
 const IndividualChat = () => {
   const [message, setMessage] = useState('');
@@ -22,8 +23,17 @@ const IndividualChat = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [latestUsername, setLatestUsername] = useState('');
   const [latestMessage, setLatestMessage] = useState('');
- 
-  
+  const [image, setImage] = useState(null);
+  const [isImageSelected, setIsImageSelected] = useState(false);
+  const [errorData, setErrorData] = useState(null); 
+  const [uploading, setUploading] = useState(false); // Upload process indicator
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal open state
+  const [modalImage, setModalImage] = useState(null); // Image being displayed in modal
+ const [ImageModalOpen, setImageModalOpen] = useState(false);
+ const [userProfiles, setUserProfiles] = useState(userData?.profileImage);
+ const { user } = useUser();
+// Destructure fullResponse (profilePicture, username, etc.) from user
+const { profilePicture, username, userId } = user || {};
   
   const formatTime = (date) => {
     let hours = date.getHours();
@@ -44,8 +54,6 @@ const IndividualChat = () => {
     console.log(`${option} clicked!`);
     // Implement specific functionality for each option here
   };  
-
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -109,8 +117,6 @@ const IndividualChat = () => {
   
     return () => unsubscribe();
   }, []);
-  
-
   const handleSendMessage = async () => {
     if (message.trim() || selectedFile) {
       const time = formatTime(new Date());
@@ -129,7 +135,6 @@ const IndividualChat = () => {
           import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
           ID.unique(),
           newMessage,
-          
         );
 
         setMessages((prevMessages) => [response, ...prevMessages]);
@@ -154,7 +159,8 @@ const IndividualChat = () => {
     let payload = {
       body: messageBody,
       user_id: userData.$id,
-      username: userData.name
+      username: userData.name,
+      timestamp: new Date().toISOString(),
     };
   
     if (editingMessageId) {
@@ -199,8 +205,6 @@ const IndividualChat = () => {
       }
     }
   };
-  
-
   const toggleMenu = (messageId) => {
     setSelectedMenu(selectedMenu === messageId ? null : messageId);
   };
@@ -219,7 +223,6 @@ const IndividualChat = () => {
     setSelectedMenu(null); // Close the menu when editing
     
   };
-
   const handleUpdateMessage = async (messageId) => {
     if (messageBody.trim()) {
       try {
@@ -246,7 +249,122 @@ const IndividualChat = () => {
     }
   };
   const RandomUserImageGenerated = Math.floor(Math.random() * 50);
-
+  const handleImageChange = (event) => {
+    const selectedImage = event.target.files[0];
+    setImage(selectedImage);
+    setIsImageSelected(!!selectedImage);
+    setErrorData(null);
+  };
+  const handleUpload = async (event) => {
+    event.preventDefault();
+  
+    if (!image) {
+      setErrorData("Please select an image first.");
+      return;
+    }
+    setUploading(true);
+    setErrorData(null);
+  
+    try {
+      // Upload the image to the storage
+      const response = await storage.createFile(
+        import.meta.env.VITE_SECOND_ACCOUNT_BUCKET_2,
+        ID.unique(),
+        image
+      );
+      const fileId = response.$id;
+      const fileUrl = await storage.getFileView(import.meta.env.VITE_SECOND_ACCOUNT_BUCKET_2, fileId);
+  
+      // Save image reference in the database with fileId and imageUrl
+      await saveImageReference(fileId, fileUrl.href);
+  
+      setUploading(false);
+      setIsImageSelected(false);
+    } catch (err) {
+      setUploading(false);
+      setErrorData("Error uploading image: " + err.message);
+    }
+  };
+  
+  // Save image reference in the database
+  const saveImageReference = async (fileId, imageUrl) => {
+    try {
+      // Create the new message object with the relevant data
+      const newMessage = {
+        user_id: userData.$id,
+        username: userData.name,
+        timestamp: new Date().toISOString(),
+        imageUrl: [imageUrl],  // Store image URL in the array
+        fileId: fileId,  // Store file ID for reference
+      };
+  
+      // Check if environment variables are defined
+      const databaseId = import.meta.env.VITE_DATABASE_ID_2;
+      const collectionId = import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2;
+  
+      if (!databaseId || !collectionId) {
+        throw new Error("Environment variables for database or collection ID are not set.");
+      }
+  
+      // Create a new document for the group chat message
+      const response = await databases.createDocument(
+        databaseId,
+        collectionId,
+        ID.unique(),
+        newMessage
+      );
+  
+      console.log('Created new document with image reference', response);
+    } catch (err) {
+      setErrorData("Error saving image reference: " + err.message);
+      console.error('Error saving image reference:', err);
+    }
+  };
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_DATABASE_ID_2,
+          import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2,
+          [Query.orderAsc('$createdAt'), Query.limit(500)]
+        );
+        setMessages(response.documents);
+  
+        // Optionally: You can also handle image URL fetching here if needed.
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+  
+    fetchMessages();
+  }, []);
+  
+  const openImageModal = (url) => {
+    setModalImage(url);
+    ImageModalOpen(true);
+  };
+  const updateProfileImage = (newImageUrl) => {
+    setUserData((prev) => ({ ...prev, profileImage: newImageUrl }));
+  };
+  
+  const updateUserProfile = (userId, newImageUrl) => {
+    setUserProfiles((prev) => ({
+      ...prev,
+      [userId]: { ...(prev[userId] || {}), profileImage: newImageUrl },
+    }));
+  };
+  
+  // Fetch user profile data from the database
+const getUserProfile = async (userId) => {
+  try {
+    const userDoc = await databases.getDocument(import.meta.envVITE_COLLECTION_ID_GROUP_MESSAGE_2, userId);
+    return userDoc.avatar || "default-avatar-url";
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return "default-avatar-url";
+  }
+};
+  
   return (
     <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
      <div
@@ -257,122 +375,162 @@ const IndividualChat = () => {
   Chat Among Friends
   </h3>
 </div>  
-      <div className="flex-1 p-5 overflow-y-auto max-h-[82vh]">
-        <div className="space-y-4 mt-14">
-        {messages.map((msg) => {
-  const isCurrentUser = msg.user_id === userData?.$id;
-  
-  return (
-    <div
-      key={msg.$id}
-      className={`relative flex items-start space-x-4 ${isCurrentUser ? 'justify-end' : ''}`}
-    >
-      {!isCurrentUser &&  (
-        <div>
-          <img
-            src={`https://randomuser.me/api/portraits/men/${RandomUserImageGenerated}.jpg`}
-            alt="User Avatar"
-            className="w-10 h-10 rounded-full bg-gray-500"
-          />
-          
-        </div>
-      )}
-      <div
-        className={`relative max-w-[80%] p-3 mx-5 shadow-md ${isCurrentUser ? 'rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto' : 'rounded-tr-lg rounded-bl-lg rounded-br-lg  bg-gray-200 text-black'}`}
-      >
-        <span style={{ fontSize: '10px' }}>
-          {new Date(msg.$createdAt).toLocaleDateString()}
-        </span>
-        
-        {isCurrentUser && (
-          <button
-            onClick={() => toggleMenu(msg.$id)}
-            className="absolute top-1 right-1 text-white hover:text-black"
-          >
-            <FaEllipsisV size={10} />
-          </button>
-        )}
-        {selectedMenu === msg.$id && (
-          <div className="absolute right-0 top-8 bg-white shadow-md rounded-lg p-2 z-30" style={{ minWidth: '120px' }}>
-            <button
-              onClick={() => handleDeleteMessage(msg.$id)}
-              className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg"
-            >
-              <FaTrash size={12} />
-              <span>Delete</span>
-            </button>
-            <button
-              onClick={() => handleEditMessage(msg.$id, msg.body)}
-              className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg"
-            >
-              <FaImage size={12} />
-              <span>Edit</span>
-            </button>
+<div className="flex-1 p-2 overflow-y-auto max-h-[82vh]">
+<div className="space-y-4 mt-14">
+  {messages.map((msg) => {
+    const isCurrentUser = msg.user_id === userData?.$id;
+    const isImageMessage = msg.imageUrl && msg.imageUrl.length > 0;
+
+    // Fetch the profile image for the message sender, not the current user
+    const userProfileImage = isCurrentUser
+      ? userData?.profilePicture || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174373.jpg?t=st=1735473718~exp=1735477318~hmac=4ba0ccc1684548f8599be9329aa873201c52ed5a9d80e985803a70067bce99a5&w=740" // Current user profile
+      : (userProfiles?.[msg.user_id]?.profileImage || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg?t=st=1735473746~exp=1735477346~hmac=d1d5680259e80f68ca8417ac715696af4512da3e86aa09d56661ee9d28bfc817&w=740"); // Other user's profile image
+
+    return (
+      <div key={msg.$id} className={`relative flex items-start space-x-4 ${isCurrentUser ? "justify-end" : ""}`}>
+        {/* Avatar for non-current user */}
+        {!isCurrentUser && (
+          <div>
+            <img
+              src={userProfileImage}
+              alt="User Avatar"
+              className="w-10 h-10 rounded-full bg-gray-500"
+            />
           </div>
         )}
-        <span className={`text-xs font-semibold block mb-1 ${isCurrentUser ? 'text-black' : 'text-blue-600'}`}>
-          {isCurrentUser ? `${msg.username} (You)` : msg.username || 'Anonymous'}
-        </span>
-        <p className="text-md font-semibold break-words">{msg.body}</p>
-        {msg.edited && <span className="text-xs text-white italic">edited</span>} {/* Show 'edited' label */}
-        <span style={{ fontSize: '10px' }}>
-          {new Date(msg.$createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          
-        </span>
-      </div>
-    </div>
-  );
-})}
 
+        {/* Message Box */}
+        <div className={`relative max-w-[60%] p-3 mx-5 shadow-md ${isCurrentUser ? "rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto" : "rounded-tr-lg rounded-bl-lg rounded-br-lg bg-gray-100 text-black"}`}>
+          {/* Display timestamp */}
+          <span style={{ fontSize: "10px" }}>
+            {new Date(msg.timestamp).toLocaleDateString()}
+          </span>
 
+          {/* Sender Name */}
+          <span className={`text-xs font-semibold block mb-1 ${isCurrentUser ? "text-black" : "text-blue-600"}`}>
+            {isCurrentUser ? `${msg.username} (You)` : msg.username || "Anonymous"}
+          </span>
+
+          {/* Render text message */}
+          {!isImageMessage && <p className="text-md font-semibold break-words">{msg.body}</p>}
+
+          {/* Render image message */}
+          {isImageMessage &&
+            msg.imageUrl.map((url, index) => (
+              <img
+                key={index}
+                src={url}
+                alt={`Message image ${index + 1}`}
+                className="max-w-full max-h-60 rounded-lg mt-2 cursor-pointer"
+                onClick={() => openImageModal(url)}
+              />
+            ))}
+
+          {/* Edited tag */}
+          {msg.edited && <span className="text-xs text-white italic">edited</span>}
+
+          {/* Time */}
+          <span style={{ fontSize: "10px" }}>
+            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
+
+          {/* Options for current user */}
+          {isCurrentUser && (
+            <div className="absolute top-1 right-0 px-2">
+              {/* Menu Icon */}
+              <FaEllipsisV
+                className="cursor-pointer text-white hover:text-black"
+                onClick={() => toggleMenu(msg.$id)}
+                size={12}
+              />
+              {/* Options Menu */}
+              {selectedMenu === msg.$id && (
+                <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => handleDeleteMessage(msg.$id)}
+                    className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+                  >
+                    <FaTrash size={12} />
+                    <span>Delete</span>
+                  </button>
+
+                  {/* Edit Button (only for text messages) */}
+                  {!isImageMessage && (
+                    <button
+                      onClick={() => handleEditMessage(msg.$id, msg.body)}
+                      className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+                    >
+                      <FaEdit size={12} />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+    );
+  })}
+</div>
+
+</div>
       <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
-  <form
-    className="flex items-center gap-1 px-4 w-full max-w-3xl  rounded-lg"
-    onSubmit={handleCreateMessage}
+      <form
+  className="flex items-center gap-3 px-4 w-full max-w-3xl rounded-lg"
+  onSubmit={handleCreateMessage}
+>
+  <textarea
+    type="text"
+    value={messageBody}
+    onFocus={() => setIsMessageFocused(true)}
+    onBlur={() => setIsMessageFocused(false)}
+    onChange={(e) => setMessageBody(e.target.value)}
+    placeholder="Type your message..."
+    className={`bg-gray-700 text-white w-full p-3 rounded-lg shadow-md resize-none ${
+      isMessageFocused ? "h-20" : "h-12"
+    } transition-all`}
+  ></textarea>
+    <button
+         type="button"
+         onClick={() => setShowPicker(!showPicker)}
+         className="emoji-button hover:bg-gray-400 text-white rounded-lg px-1 py-1"
+       >
+         😀
+       </button>
+   
+       {showPicker && (
+         <div className="emoji-picker absolute bottom-16 right-4 z-50">
+           <EmojiPicker onEmojiClick={handleEmojiClick} />
+         </div>
+       )}
+  <input
+    type="file"
+    accept="image/*"
+    id="image-upload"
+    onChange={handleImageChange}
+    className="hidden"
+  />
+  <label htmlFor="image-upload" className="cursor-pointer">
+    <FaImage size={18} className="text-white hover:text-[#5fc9f3]" />
+  </label>
+  {isImageSelected && (
+    <button
+      onClick={handleUpload}
+      disabled={uploading}
+      className="text-white px-3 py-2 rounded flex items-center justify-center gap-2"
+    >
+      {uploading ? <div className="loading-circle"></div> : <FaUpload className="UploadMovement py-1 rounded-sm" size={25} />}
+    </button>
+  )}
+  <button
+    type="submit"
+    className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 flex items-center justify-center"
   >
-    {/* Input for the message */}
-    <textarea
-      type="text"
-      value={messageBody}
-      onFocus={() => setIsMessageFocused(true)}
-      onBlur={() => setIsMessageFocused(false)}
-      onChange={(e) => setMessageBody(e.target.value)}
-      style={{boxShadow:'rgba(0, 0, 0, 0.09) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px'}}
-      placeholder="Type your message..."
-      className={`bg-gray-700 text-white w-full p-3 rounded-lg shadow-md resize-none ${
-        isMessageFocused ? "h-20" : "h-12"
-      } transition-all`}
-    ></textarea>
-
-    {/* Emoji picker */}
-    <button
-      type="button"
-      onClick={() => setShowPicker(!showPicker)}
-      className="hover:bg-gray-600 text-white rounded-lg p-2"
-    >
-      😀
-    </button>
-
-    {showPicker && (
-      <div className="absolute bottom-16 right-4 z-50">
-        <EmojiPicker
-          onEmojiClick={handleEmojiClick}
-          value={messageBody}
-          onChange={(e) => setMessageBody(e.target.value)}
-        />
-      </div>
-    )}
-
-    {/* Send button */}
-    <button
-      type="submit"
-      className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 flex items-center justify-center"
-    >
-      <FaLocationArrow />
-    </button>
-  </form>
+    <FaLocationArrow />
+  </button>
+</form>
 </div>
 {/* Navigation buttons */}
 <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
@@ -416,10 +574,6 @@ const IndividualChat = () => {
     <FaDollarSign className="text-[#66BB6A]" size={18} />Money
   </button>
 </div>
-
-
-
-
 </div>
   );
 };
