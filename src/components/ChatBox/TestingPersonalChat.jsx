@@ -4,10 +4,18 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload, FaEye } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
+import {
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
+import { saveAs } from 'file-saver';
 
 
 const TestingPersonalChat = () => {
@@ -36,9 +44,20 @@ const TestingPersonalChat = () => {
   const [viewedImages, setViewedImages] = useState({});
   const [hideButton, setHideButton] = useState(false);
 const [isImageSelected, setIsImageSelected] = useState(false);
+const [dialogOpen, setDialogOpen] = useState(false);
+const [dialogImage, setDialogImage] = useState("");
 
 
-  
+const openDialog = (url) => {
+  setDialogImage(url);
+  setDialogOpen(true);
+};
+
+const closeDialog = () => {
+  setDialogOpen(false);
+  setDialogImage("");
+};
+
   const openModal = (info) => {
     setCurrentInfo(info);
     setIsModalOpen(true);
@@ -498,12 +517,20 @@ const clearImage = async (messageId) => {
   }
 };
 const handleDownload = (url) => {
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "downloaded_image"; // You can modify the filename here.
-  link.click();
-  
+  // Fetch the image as a Blob
+  fetch(url)
+    .then(response => response.blob()) // Convert the image to a Blob
+    .then(blob => {
+      // Generate a filename (if the URL does not already provide a name)
+      const fileName = url.split('/').pop(); // Take the last part of the URL
+      saveAs(blob, fileName); // Trigger the download using file-saver
+    })
+    .catch(error => {
+      console.error('Download failed:', error);
+    });
 };
+
+
 
 const openImageModal = (url) => {
   setModalImage(url);
@@ -588,41 +615,81 @@ const closeModalImage = () => {
         
                   {/* Message Content */}
                   <div className="message-content">
-                    <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
-                      {isCurrentUser ? `${user?.name} (You)` : message.senderName}
-                    </p>
-                    {!isImageMessage && <p className="text-[16px] py-1">{message.PersonalMessage}</p>}
-        
-                    {/* Display Image If Exists */}
-                    {isImageMessage && (
-                      <div className="image-container mt-2 relative">
-                        {message.imageUrl.map((url, index) => (
-                          <div key={index} className="relative">
-                            {/* Image */}
-                            <img
-                              src={url}
-                              alt={`Uploaded ${index + 1}`}
-                              className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
-                                !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
-                              }`}
-                              onClick={() => openImageModal(url)}
-                            />
-        
-                            {/* See Image Button */}
-                            {!isCurrentUser && !downloadedImages[url] && (
-                              <button
-                                onClick={() => handleDownload(url)}
-                                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm font-semibold rounded-lg"
-                              >
-                                See Image
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-        
+  <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
+    {isCurrentUser ? `${user?.name} (You)` : message.senderName}
+  </p>
+  {!isImageMessage && <p className="text-[16px] py-1">{message.PersonalMessage}</p>}
+
+  {/* Display Image If Exists */}
+  {isImageMessage && (
+    <div className="image-container mt-2 relative">
+      {message.imageUrl.map((url, index) => (
+        <div key={index} className="relative" onClick={() => openDialog(url)}>
+          {/* Overlay Text */}
+          {!isCurrentUser && !downloadedImages[url] && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
+              See Image 
+            </div>
+          )}
+          {/* Image */}
+          <img
+            src={url}
+            alt={`Uploaded ${index + 1}`}
+            className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
+              !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
+            }`}
+          />
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* Dialog for Image Preview https://img.freepik.com/free-vector/background-abstract-pixel-rain_23-2148359404.jpg?t=st=1736347431~exp=1736351031~hmac=4a7530abe6a57d46273def866542173ac8fdd4628ec8e7891b2709862e3e0b3c&w=1060  https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740 */}
+  <Dialog open={dialogOpen} handler={closeDialog} className="bg-gray-800" style={{
+  backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
+  backgroundSize: '100% 100%',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+}}>
+  <DialogHeader className="text-2xl text-cyan-300 font-bold tracking-wide">
+  {user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}
+</DialogHeader>
+
+
+    <DialogBody className="flex justify-center items-center min-h-[80vh]">
+      <div className="relative">
+        {/* 3D Image with CSS Effect */}
+        <img
+          src={dialogImage}
+          alt="Preview"
+          className="max-w-full max-h-[80vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
+          style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+        />
+      </div>
+    </DialogBody>
+    <DialogFooter>
+      <Button
+        variant="text"
+        color="red"
+        onClick={closeDialog}
+        className="mr-1 bg-white"
+      >
+        <span>Close</span>
+      </Button>
+      {/* Download Button */}
+      <Button
+        variant="gradient"
+        color="blue"
+        className="bg-blue-500 hover:bg-blue-600 rounded-xl"
+        onClick={() => handleDownload(dialogImage)} // Trigger the download action here
+      >
+        <span className="text-white "> <FaDownload className="DownloadingProcessing" size={20}/> </span>
+      </Button>
+    </DialogFooter>
+  </Dialog>
+</div>
+
+
                   {/* Options for current user (edit and delete) */}
                   {isCurrentUser && (
                     <div className="absolute top-1 right-1 text-white hover:text-black">
@@ -664,7 +731,7 @@ const closeModalImage = () => {
                   )}
         
                   {/* Timestamp */}
-                  <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
+                  <small className={`text-[10px]  ${isCurrentUser ? "text-white" : "text-black"}`}>
             {formatTime(new Date(message.timestamp))}
           </small>
                 </div>
