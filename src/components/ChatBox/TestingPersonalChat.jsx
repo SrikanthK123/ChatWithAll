@@ -662,7 +662,7 @@ const closeModalImage = () => {
         <img
           src={dialogImage}
           alt="Preview"
-          className="max-w-full max-h-[80vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
+          className="max-w-full max-h-[65vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
           style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
         />
       </div>
