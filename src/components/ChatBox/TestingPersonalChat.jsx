@@ -656,7 +656,7 @@ const closeModalImage = () => {
 </DialogHeader>
 
 
-    <DialogBody className="flex justify-center items-center min-h-[80vh]">
+    <DialogBody className="flex justify-center items-center min-h-[70vh]">
       <div className="relative">
         {/* 3D Image with CSS Effect */}
         <img
