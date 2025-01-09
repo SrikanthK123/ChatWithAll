@@ -627,7 +627,7 @@ const closeModalImage = () => {
         <div key={index} className="relative" onClick={() => openDialog(url)}>
           {/* Overlay Text */}
           {!isCurrentUser && !downloadedImages[url] && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
+            <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
               See Image 
             </div>
           )}
@@ -637,7 +637,8 @@ const closeModalImage = () => {
             alt={`Uploaded ${index + 1}`}
             className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
               !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
-            }`}
+            } `}
+            style={{boxShadow:'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px'}} // box-shadow: rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset, rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset, rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset, rgba(0, 0, 0, 0.06) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;
           />
         </div>
       ))}
@@ -651,9 +652,17 @@ const closeModalImage = () => {
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
 }}>
-  <DialogHeader className="text-2xl text-cyan-300 font-bold tracking-wide">
-  {user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}
+ <DialogHeader
+  className="text-2xl text-cyan-300 font-bold tracking-wide"
+  style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
+>
+  <p>{user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}</p>
+  
 </DialogHeader>
+<p className="text-[11px] text-gray-200 mt-1 mx-2 w-fit p-1 rounded-md bg-[#001529]">
+    Date : {new Date(message.$createdAt).toLocaleDateString()} & Time : {formatTime(new Date(message.timestamp))}
+  </p>
+
 
 
     <DialogBody className="flex justify-center items-center min-h-[70vh]">
@@ -680,7 +689,7 @@ const closeModalImage = () => {
       <Button
         variant="gradient"
         color="blue"
-        className="bg-blue-500 hover:bg-blue-600 rounded-xl"
+        className="bg-blue-500 hover:bg-blue-600 rounded-xl mx-1"
         onClick={() => handleDownload(dialogImage)} // Trigger the download action here
       >
         <span className="text-white "> <FaDownload className="DownloadingProcessing" size={20}/> </span>
