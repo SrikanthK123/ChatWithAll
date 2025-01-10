@@ -458,7 +458,7 @@ const handleDownload = (url) => {
             {msg.imageUrl.map((url, index) => (
               <div key={index} className="relative" onClick={() => openDialog(url, msg.username || "Anonymous")}>
                 {!isCurrentUser && !downloadedImages[url] && (
-                  <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
+                  <div className="absolute cursor-pointer inset-0 flex items-center justify-center  bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-30">
                     See Image
                   </div>
                 )}
