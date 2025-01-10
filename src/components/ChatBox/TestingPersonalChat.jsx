@@ -550,7 +550,7 @@ const closeModalImage = () => {
         </button>
       </header>
 
-      <div className="flex-grow overflow-y-auto p-4 max-h-[79vh]">
+      <div className="flex-grow overflow-y-auto p-4 max-h-[82vh]">
         {loading ? (
           /* From Uiverse.io by adamgiebl */ 
 <section className="dots-container">
@@ -769,7 +769,7 @@ const closeModalImage = () => {
         </div>
   )}
       </div>
-      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-4 bg-[#001529] justify-center">
+      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-3 bg-[#001529] justify-center">
     <textarea
       type="text"
       value={messageBody}

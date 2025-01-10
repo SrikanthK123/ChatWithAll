@@ -1,13 +1,20 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { FaImage, FaTrash,FaEdit, FaEllipsisV,FaUpload ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile, FaSearchLocation, FaAudible, FaAudioDescription, FaCommentDots, FaMicrophone, FaCog, FaVideo, FaDollarSign } from 'react-icons/fa'; 
+import { FaImage, FaTrash,FaEdit, FaEllipsisV,FaUpload,FaDownload ,FaFileAlt,FaPaperclip,FaCamera,FaFolderOpen,FaLocationArrow,FaUserFriends,FaBan,FaSmile, FaSearchLocation, FaAudible, FaAudioDescription, FaCommentDots, FaMicrophone, FaCog, FaVideo, FaDollarSign } from 'react-icons/fa'; 
 import { useUser } from '../../UseContext';
 import { account, client, databases,storage } from "../../lib/appwrite";
 import { AlluseUsers } from '../../hook/AllUserData';
 import { ID, Query } from 'appwrite';
 import EmojiPicker from 'emoji-picker-react';
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
-
+import { saveAs } from 'file-saver';
+import {
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
 
 const IndividualChat = () => {
   const [message, setMessage] = useState('');
@@ -34,6 +41,22 @@ const IndividualChat = () => {
  const { user } = useUser();
 // Destructure fullResponse (profilePicture, username, etc.) from user
 const { profilePicture, username, userId } = user || {};
+const [downloadedImages, setDownloadedImages] = useState({});
+const [dialogImage, setDialogImage] = useState("");
+const [dialogOpen, setDialogOpen] = useState(false);
+const [dialogUsername, setDialogUsername] = useState("");
+
+
+const openDialog = (imageUrl, username) => {
+  setDialogImage(imageUrl);
+  setDialogUsername(username);
+  setDialogOpen(true);
+};
+
+const closeDialog = () => {
+  setDialogOpen(false);
+  setDialogImage("");
+};
   
   const formatTime = (date) => {
     let hours = date.getHours();
@@ -364,6 +387,19 @@ const getUserProfile = async (userId) => {
     return "default-avatar-url";
   }
 };
+const handleDownload = (url) => {
+  // Fetch the image as a Blob
+  fetch(url)
+    .then(response => response.blob()) // Convert the image to a Blob
+    .then(blob => {
+      // Generate a filename (if the URL does not already provide a name)
+      const fileName = url.split('/').pop(); // Take the last part of the URL
+      saveAs(blob, fileName); // Trigger the download using file-saver
+    })
+    .catch(error => {
+      console.error('Download failed:', error);
+    });
+};
   
   return (
     <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
@@ -381,10 +417,10 @@ const getUserProfile = async (userId) => {
     const isCurrentUser = msg.user_id === userData?.$id;
     const isImageMessage = msg.imageUrl && msg.imageUrl.length > 0;
 
-    // Fetch the profile image for the message sender, not the current user
+    // Fetch the profile image for the message sender
     const userProfileImage = isCurrentUser
-      ? userData?.profilePicture || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174373.jpg?t=st=1735473718~exp=1735477318~hmac=4ba0ccc1684548f8599be9329aa873201c52ed5a9d80e985803a70067bce99a5&w=740" // Current user profile
-      : (userProfiles?.[msg.user_id]?.profileImage || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg?t=st=1735473746~exp=1735477346~hmac=d1d5680259e80f68ca8417ac715696af4512da3e86aa09d56661ee9d28bfc817&w=740"); // Other user's profile image
+      ? userData?.profilePicture || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174373.jpg?t=st=1735473718~exp=1735477318~hmac=4ba0ccc1684548f8599be9329aa873201c52ed5a9d80e985803a70067bce99a5&w=740"
+      : (userProfiles?.[msg.user_id]?.profileImage || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg?t=st=1735473746~exp=1735477346~hmac=d1d5680259e80f68ca8417ac715696af4512da3e86aa09d56661ee9d28bfc817&w=740");
 
     return (
       <div key={msg.$id} className={`relative flex items-start space-x-4 ${isCurrentUser ? "justify-end" : ""}`}>
@@ -400,7 +436,12 @@ const getUserProfile = async (userId) => {
         )}
 
         {/* Message Box */}
-        <div className={`relative max-w-[60%] p-3 mx-5 shadow-md ${isCurrentUser ? "rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto" : "rounded-tr-lg rounded-bl-lg rounded-br-lg bg-gray-100 text-black"}`}>
+        <div
+          className={`relative max-w-[60%] p-3 mx-5 shadow-md ${isCurrentUser
+            ? "rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto"
+            : "rounded-tr-lg rounded-bl-lg rounded-br-lg bg-gray-100 text-black"
+          }`}
+        >
           {/* Display timestamp */}
           <span style={{ fontSize: "10px" }}>
             {new Date(msg.timestamp).toLocaleDateString()}
@@ -415,18 +456,88 @@ const getUserProfile = async (userId) => {
           {!isImageMessage && <p className="text-md font-semibold break-words">{msg.body}</p>}
 
           {/* Render image message */}
-          {isImageMessage &&
-            msg.imageUrl.map((url, index) => (
-              <img
-                key={index}
-                src={url}
-                alt={`Message image ${index + 1}`}
-                className="max-w-full max-h-60 rounded-lg mt-2 cursor-pointer"
-                onClick={() => openImageModal(url)}
-              />
+          {isImageMessage && (
+            <div className="image-container mt-2 relative">
+            {msg.imageUrl.map((url, index) => (
+              <div key={index} className="relative" onClick={() => openDialog(url, msg.username || "Anonymous")}>
+                {!isCurrentUser && !downloadedImages[url] && (
+                  <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
+                    See Image
+                  </div>
+                )}
+                <img
+                  src={url}
+                  alt={`Uploaded ${index + 1}`}
+                  className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
+                    !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
+                  }`}
+                  style={{
+                    boxShadow: "rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
+                  }}
+                />
+              </div>
             ))}
+          </div>
+          
+          )}
+          <Dialog
+  open={dialogOpen}
+  onClose={closeDialog}
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-description"
+  aria-modal="true"  // This ensures the dialog is treated as a modal by screen readers
+  className="bg-gray-800"
+  style={{
+    backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('image_url')`,
+    backgroundSize: '100% 100%',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }}
+>
+  <DialogHeader
+    className="text-2xl text-cyan-300 font-bold tracking-wide"
+    style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
+  >
+    <p>✨ Image Shared by {dialogUsername} ✨</p>
+  </DialogHeader>
 
-          {/* Edited tag */}
+  <p className="text-[11px] text-gray-200 mt-1 mx-2 w-fit p-1 rounded-md bg-[#001529]">
+    Date: {new Date(msg.timestamp).toLocaleDateString()} & Time: 
+    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+  </p>
+
+  <DialogBody className="flex justify-center items-center min-h-[70vh]">
+    <div className="relative">
+      <img
+        src={dialogImage}
+        alt="Shared Image"
+        className="max-w-full max-h-[65vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
+        style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+      />
+    </div>
+  </DialogBody>
+  <DialogFooter>
+    <Button
+      variant="text"
+      color="red"
+      onClick={closeDialog}
+      className="mr-1 bg-white"
+    >
+      <span>Close</span>
+    </Button>
+    <Button
+      variant="gradient"
+      color="blue"
+      className="bg-blue-500 hover:bg-blue-600 rounded-xl mx-1"
+      onClick={() => handleDownload(dialogImage)}
+    >
+      <FaDownload className="DownloadingProcessing" size={20} />
+    </Button>
+  </DialogFooter>
+</Dialog>
+         
+
+ {/* Edited tag */}
           {msg.edited && <span className="text-xs text-white italic">edited</span>}
 
           {/* Time */}
@@ -437,32 +548,27 @@ const getUserProfile = async (userId) => {
           {/* Options for current user */}
           {isCurrentUser && (
             <div className="absolute top-1 right-0 px-2">
-              {/* Menu Icon */}
               <FaEllipsisV
                 className="cursor-pointer text-white hover:text-black"
                 onClick={() => toggleMenu(msg.$id)}
                 size={12}
               />
-              {/* Options Menu */}
               {selectedMenu === msg.$id && (
                 <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
-                  {/* Delete Button */}
                   <button
                     onClick={() => handleDeleteMessage(msg.$id)}
                     className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
                   >
                     <FaTrash size={12} />
-                    <span>Delete</span>
+                    Delete
                   </button>
-
-                  {/* Edit Button (only for text messages) */}
                   {!isImageMessage && (
                     <button
                       onClick={() => handleEditMessage(msg.$id, msg.body)}
                       className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
                     >
                       <FaEdit size={12} />
-                      <span>Edit</span>
+                      Edit
                     </button>
                   )}
                 </div>
@@ -473,7 +579,10 @@ const getUserProfile = async (userId) => {
       </div>
     );
   })}
+  
 </div>
+
+
 
 </div>
       <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
