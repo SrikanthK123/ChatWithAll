@@ -362,10 +362,7 @@ const closeDialog = () => {
     fetchMessages();
   }, []);
   
-  const openImageModal = (url) => {
-    setModalImage(url);
-    ImageModalOpen(true);
-  };
+  
   const updateProfileImage = (newImageUrl) => {
     setUserData((prev) => ({ ...prev, profileImage: newImageUrl }));
   };
@@ -480,25 +477,17 @@ const handleDownload = (url) => {
           </div>
           
           )}
-          <Dialog
-  open={dialogOpen}
-  onClose={closeDialog}
-  aria-labelledby="dialog-title"
-  aria-describedby="dialog-description"
-  aria-modal="true"  // This ensures the dialog is treated as a modal by screen readers
-  className="bg-gray-800"
-  style={{
-    backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('image_url')`,
-    backgroundSize: '100% 100%',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-  }}
->
+          <Dialog open={dialogOpen}  handler={closeDialog} className="bg-gray-800" style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
+            backgroundSize: '100% 100%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}>
   <DialogHeader
     className="text-2xl text-cyan-300 font-bold tracking-wide"
     style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
   >
-    <p>✨ Image Shared by {dialogUsername} ✨</p>
+    <p className='text-xl'>✨ Image Shared by {dialogUsername} ✨</p>
   </DialogHeader>
 
   <p className="text-[11px] text-gray-200 mt-1 mx-2 w-fit p-1 rounded-md bg-[#001529]">
@@ -506,7 +495,7 @@ const handleDownload = (url) => {
     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
   </p>
 
-  <DialogBody className="flex justify-center items-center min-h-[70vh]">
+  <DialogBody className="flex justify-center items-center min-h-[65vh]">
     <div className="relative">
       <img
         src={dialogImage}
