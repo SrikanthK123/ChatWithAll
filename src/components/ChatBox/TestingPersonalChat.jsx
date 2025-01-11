@@ -38,7 +38,6 @@ const TestingPersonalChat = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isDownloaded, setDownloaded] = useState(false); // State to track if the image is downloaded
-  const [modalImage, setModalImage] = useState("");
   const [downloadedImages, setDownloadedImages] = useState({});
   const [ImageModalOpen, setImageModalOpen] = useState(false);
   const [viewedImages, setViewedImages] = useState({});
@@ -46,10 +45,15 @@ const TestingPersonalChat = () => {
 const [isImageSelected, setIsImageSelected] = useState(false);
 const [dialogOpen, setDialogOpen] = useState(false);
 const [dialogImage, setDialogImage] = useState("");
+const [isModalVisible, setModalVisible] = useState(false);
+const [modalImage, setModalImage] = useState("");
+const [modalTitle, setModalTitle] = useState("");
+const [modalDateTime, setModalDateTime] = useState("");
 
 
-const openDialog = (url) => {
-  setDialogImage(url);
+
+const openDialog = (imageUrl, username) => {
+  setDialogImage(imageUrl);
   setDialogOpen(true);
 };
 
@@ -57,6 +61,13 @@ const closeDialog = () => {
   setDialogOpen(false);
   setDialogImage("");
 };
+  // Function to open the dialog
+  const showDialog = (imageUrl, title, dateTime) => {
+    setModalImage(imageUrl);
+    setModalTitle(title);
+    setModalDateTime(dateTime);
+    setModalVisible(true);
+  };
 
   const openModal = (info) => {
     setCurrentInfo(info);
