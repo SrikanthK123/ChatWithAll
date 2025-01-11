@@ -34,9 +34,6 @@ const IndividualChat = () => {
   const [isImageSelected, setIsImageSelected] = useState(false);
   const [errorData, setErrorData] = useState(null); 
   const [uploading, setUploading] = useState(false); // Upload process indicator
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal open state
-  const [modalImage, setModalImage] = useState(null); // Image being displayed in modal
- const [ImageModalOpen, setImageModalOpen] = useState(false);
  const [userProfiles, setUserProfiles] = useState(userData?.profileImage);
  const { user } = useUser();
 // Destructure fullResponse (profilePicture, username, etc.) from user
@@ -45,6 +42,10 @@ const [downloadedImages, setDownloadedImages] = useState({});
 const [dialogImage, setDialogImage] = useState("");
 const [dialogOpen, setDialogOpen] = useState(false);
 const [dialogUsername, setDialogUsername] = useState("");
+const [isModalVisible, setModalVisible] = useState(false);
+const [modalImage, setModalImage] = useState("");
+const [modalTitle, setModalTitle] = useState("");
+const [modalDateTime, setModalDateTime] = useState("");
 
 
 const openDialog = (imageUrl, username) => {
@@ -57,6 +58,31 @@ const closeDialog = () => {
   setDialogOpen(false);
   setDialogImage("");
 };
+  // Function to open the dialog
+  const showDialog = (imageUrl, title, dateTime) => {
+    setModalImage(imageUrl);
+    setModalTitle(title);
+    setModalDateTime(dateTime);
+    setModalVisible(true);
+  };
+
+  // Function to close the dialog
+  const hideDialog = () => {
+    setModalVisible(false);
+    setModalImage("");
+    setModalTitle("");
+    setModalDateTime("");
+  };
+
+  // Function to handle image download
+  const downloadImage = (url) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "shared_image.jpg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   const formatTime = (date) => {
     let hours = date.getHours();
@@ -410,30 +436,37 @@ const handleDownload = (url) => {
 </div>  
 <div className="flex-1 p-2 overflow-y-auto max-h-[82vh]">
 <div className="space-y-4 mt-14">
-  {messages.map((msg) => {
-    const isCurrentUser = msg.user_id === userData?.$id;
-    const isImageMessage = msg.imageUrl && msg.imageUrl.length > 0;
+      {messages.map((msg) => {
+        const isCurrentUser = msg.user_id === userData?.$id;
+        const isImageMessage = msg.imageUrl && msg.imageUrl.length > 0;
 
-    // Fetch the profile image for the message sender
-    const userProfileImage = isCurrentUser
-      ? userData?.profilePicture || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174373.jpg?t=st=1735473718~exp=1735477318~hmac=4ba0ccc1684548f8599be9329aa873201c52ed5a9d80e985803a70067bce99a5&w=740"
-      : (userProfiles?.[msg.user_id]?.profileImage || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg?t=st=1735473746~exp=1735477346~hmac=d1d5680259e80f68ca8417ac715696af4512da3e86aa09d56661ee9d28bfc817&w=740");
+        // User Profile Image
+        const userProfileImage = isCurrentUser
+          ? userData?.profilePicture ||
+            "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174373.jpg"
+          : userProfiles?.[msg.user_id]?.profileImage ||
+            "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg";
 
-    return (
-      <div key={msg.$id} className={`relative flex items-start space-x-4 ${isCurrentUser ? "justify-end" : ""}`}>
-        {/* Avatar for non-current user */}
-        {!isCurrentUser && (
-          <div>
-            <img
-              src={userProfileImage}
-              alt="User Avatar"
-              className="w-10 h-10 rounded-full bg-gray-500"
-            />
-          </div>
-        )}
+        return (
+          <div
+            key={msg.$id}
+            className={`relative flex items-start space-x-4 ${
+              isCurrentUser ? "justify-end" : ""
+            }`}
+          >
+            {/* Avatar for non-current user */}
+            {!isCurrentUser && (
+              <div>
+                <img
+                  src={userProfileImage}
+                  alt="User Avatar"
+                  className="w-10 h-10 rounded-full bg-gray-500"
+                />
+              </div>
+            )}
 
-        {/* Message Box */}
-        <div
+            {/* Message Box */}
+            <div
           className={`relative max-w-[60%] p-3 mx-5 shadow-md ${isCurrentUser
             ? "rounded-tl-lg rounded-br-lg rounded-bl-lg bg-blue-500 text-white ml-auto"
             : "rounded-tr-lg rounded-bl-lg rounded-br-lg bg-gray-100 text-black"
@@ -444,132 +477,145 @@ const handleDownload = (url) => {
             {new Date(msg.timestamp).toLocaleDateString()}
           </span>
 
-          {/* Sender Name */}
-          <span className={`text-xs font-semibold block mb-1 ${isCurrentUser ? "text-black" : "text-blue-600"}`}>
-            {isCurrentUser ? `${msg.username} (You)` : msg.username || "Anonymous"}
-          </span>
+              {/* Sender Name */}
+              <span
+                className={`text-xs font-semibold block mb-1 ${
+                  isCurrentUser ? "text-black" : "text-blue-600"
+                }`}
+              >
+                {isCurrentUser
+                  ? `${msg.username} (You)`
+                  : msg.username || "Anonymous"}
+              </span>
 
-          {/* Render text message */}
-          {!isImageMessage && <p className="text-md font-semibold break-words">{msg.body}</p>}
+              {/* Render text message */}
+              {!isImageMessage && (
+                <p className="text-md font-semibold break-words">{msg.body}</p>
+              )}
 
-          {/* Render image message */}
-          {isImageMessage && (
-            <div className="image-container mt-2 relative">
-            {msg.imageUrl.map((url, index) => (
-              <div key={index} className="relative" onClick={() => openDialog(url, msg.username || "Anonymous")}>
-                {!isCurrentUser && !downloadedImages[url] && (
-                  <div className="absolute cursor-pointer inset-0 flex items-center justify-center  bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-30">
-                    See Image
-                  </div>
-                )}
-                <img
-                  src={url}
-                  alt={`Uploaded ${index + 1}`}
-                  className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
-                    !isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"
-                  }`}
-                  style={{
-                    boxShadow: "rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-          
-          )}
-          <Dialog open={dialogOpen}  handler={closeDialog} className="bg-gray-800" style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
-            backgroundSize: '100% 100%',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}>
-  <DialogHeader
-    className="text-2xl text-cyan-300 font-bold tracking-wide"
-    style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
-  >
-    <p className='text-xl'>✨ Image Shared by {dialogUsername} ✨</p>
-  </DialogHeader>
+              {/* Render image message */}
+              {isImageMessage && (
+                <div className="image-container mt-2 relative">
+                  {msg.imageUrl.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative"
+                      onClick={() =>
+                        openDialog(url, msg.username || "Anonymous")
+                      }
+                    >
+                      {!isCurrentUser && !downloadedImages[url] && (
+                        <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-30">
+                          See Image
+                        </div>
+                      )}
+                      <img
+                        src={url}
+                        alt={`Uploaded ${index + 1}`}
+                        className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${
+                          !isCurrentUser && !downloadedImages[url]
+                            ? "blur-sm"
+                            : "blur-none"
+                        }`}
+                        style={{
+                          boxShadow:
+                            "rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
-  <p className="text-[11px] text-gray-200 mt-1 mx-2 w-fit p-1 rounded-md bg-[#001529]">
-    Date: {new Date(msg.timestamp).toLocaleDateString()} & Time: 
-    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-  </p>
-
-  <DialogBody className="flex justify-center items-center min-h-[65vh]">
-    <div className="relative">
-      <img
-        src={dialogImage}
-        alt="Shared Image"
-        className="max-w-full max-h-[65vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
-        style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
-      />
-    </div>
-  </DialogBody>
-  <DialogFooter>
-    <Button
-      variant="text"
-      color="red"
-      onClick={closeDialog}
-      className="mr-1 bg-white"
-    >
-      <span>Close</span>
-    </Button>
-    <Button
-      variant="gradient"
-      color="blue"
-      className="bg-blue-500 hover:bg-blue-600 rounded-xl mx-1"
-      onClick={() => handleDownload(dialogImage)}
-    >
-      <FaDownload className="DownloadingProcessing" size={20} />
-    </Button>
-  </DialogFooter>
-</Dialog>
-         
-
- {/* Edited tag */}
-          {msg.edited && <span className="text-xs text-white italic">edited</span>}
-
-          {/* Time */}
+              {/* Edited tag */}
+              {msg.edited && (
+                <span className="text-xs text-gray-500 italic">edited</span>
+              )}
+               {/* Time */}
           <span style={{ fontSize: "10px" }}>
             {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
 
-          {/* Options for current user */}
-          {isCurrentUser && (
-            <div className="absolute top-1 right-0 px-2">
-              <FaEllipsisV
-                className="cursor-pointer text-white hover:text-black"
-                onClick={() => toggleMenu(msg.$id)}
-                size={12}
-              />
-              {selectedMenu === msg.$id && (
-                <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
-                  <button
-                    onClick={() => handleDeleteMessage(msg.$id)}
-                    className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
-                  >
-                    <FaTrash size={12} />
-                    Delete
-                  </button>
-                  {!isImageMessage && (
-                    <button
-                      onClick={() => handleEditMessage(msg.$id, msg.body)}
-                      className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+              {/* Options for current user */}
+              {isCurrentUser && (
+                <div className="absolute top-1 right-0 px-2">
+                  <FaEllipsisV
+                    className="cursor-pointer text-white hover:text-black"
+                    onClick={() => toggleMenu(msg.$id)}
+                    size={12}
+                  />
+                  {selectedMenu === msg.$id && (
+                    <div
+                      className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30"
+                      style={{ minWidth: "120px" }}
                     >
-                      <FaEdit size={12} />
-                      Edit
-                    </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.$id)}
+                        className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+                      >
+                        <FaTrash size={12} />
+                        Delete
+                      </button>
+                      {!isImageMessage && (
+                        <button
+                          onClick={() =>
+                            handleEditMessage(msg.$id, msg.body)
+                          }
+                          className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+                        >
+                          <FaEdit size={12} />
+                          Edit
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
-    );
-  })}
-  
-</div>
+          </div>
+        );
+      })}
+
+      {/* Dialog */}
+      <Dialog
+        open={dialogOpen}
+        handler={closeDialog}
+        className=""
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg')`,
+          backgroundSize: "100% 100%",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <DialogHeader className="text-2xl text-cyan-300 font-bold">
+          <p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>
+        </DialogHeader>
+        <DialogBody className="flex justify-center items-center min-h-[65vh]">
+          <img
+            src={dialogImage}
+            alt="Shared"
+            className="max-w-full max-h-[65vh] rounded-lg transform hover:scale-105 transition duration-300"
+          />
+        </DialogBody>
+        <DialogFooter>
+          <button
+            onClick={closeDialog}
+            className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100"
+            style={{boxShadow:'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px'}}
+          >
+            Close
+          </button>
+          <button
+            onClick={() => handleDownload(dialogImage)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-2"
+            style={{boxShadow:'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px'}}
+          >
+            <FaDownload />
+          </button>
+        </DialogFooter>
+      </Dialog>
+    </div>
 
 
 
