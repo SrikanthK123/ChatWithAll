@@ -513,10 +513,10 @@ const handleDownload = (url) => {
     : userProfiles?.[msg.user_id]?.profileImage || "https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg";
 
   return (
-    <div key={msg.$id} className={`relative flex items-start space-x-4 py-2 ${isCurrentUser ? "justify-end" : ""}`}>
+    <div key={msg.$id} className={`relative flex items-start space-x-1 py-2 ${isCurrentUser ? "justify-end" : ""}`}>
       {!isCurrentUser && (
         <div>
-          <img src={userProfileImage} alt="User Avatar" className="w-10 h-10 rounded-full bg-gray-500" />
+          <img src={userProfileImage} alt="User Avatar" className="w-8 h-8  rounded-full bg-gray-500" />
         </div>
       )}
 
