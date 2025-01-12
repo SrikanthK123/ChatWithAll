@@ -845,7 +845,7 @@ const closeModalImage = () => {
 
      {/* Modal Section */}
      {isModalOpen && currentInfo && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
           <div className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg">
             <div className="flex justify-center mb-4">
               <div

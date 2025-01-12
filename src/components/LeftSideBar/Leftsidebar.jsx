@@ -138,12 +138,21 @@ const Leftsidebar = () => {
   <div className="p-2">
     {/* User Info Display */}
     {user ? (
-      <div className="mb-6">
-        <div className="text-xs text-white flex p-1 pl-3 bg-[#303749a5]">
-          <FaEnvelope size={20} className='mt-2 text-[#0066ff]' /> 
-          <span className="p-2 text-sm">{user.email}</span>
-        </div>
+      <div className="text-xs text-white flex p-1 pl-3 bg-[#303749a5] relative group cursor-pointer my-2">
+      <FaEnvelope size={20} className="mt-2 text-[#0066ff]" />
+      <span
+        className="p-2 text-sm overflow-hidden overflow-ellipsis whitespace-nowrap"
+        style={{ maxWidth: "12rem", display: "block" }}
+      >
+        {user.email}
+      </span>
+      {/* Tooltip */}
+      <div className="absolute hidden group-hover:flex bg-cyan-800 text-white text-xs rounded-md p-2 shadow-lg z-10">
+        {user.email}
       </div>
+    </div>
+    
+    
     ) : (
       <p className="text-white text-sm">Loading user...</p>
     )}

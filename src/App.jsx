@@ -17,6 +17,7 @@ import Leftsidebar from './components/LeftSideBar/Leftsidebar';
 import BucketTest from './components/BucketTest';
 import AIChat from './components/AIChat';
 import ImageSent from './components/ChatBox/ImageSent';
+import AITranslater from './components/AITranslater';
 
 function App() {
   const user = useUser();
@@ -36,6 +37,7 @@ function App() {
         <Route path='/BucketTest' element={<BucketTest/>} />
         <Route path='/AiChat' element={<AIChat/>} />
         <Route path='/ImageSent' element={<ImageSent/>} />
+        <Route path='/AITranslater' element={<AITranslater/>} />
       </Routes>
     </Router>
   );

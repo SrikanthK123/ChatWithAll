@@ -222,13 +222,17 @@ const Rightsidebar = () => {
               <FaPen />
             </button>
           </div>
-          <p className="font-mono text-center text-xl text-[#0066ff] font-semibold mt-2">
-            {userData?.name || "Loading..."}
-          </p>
+          <p 
+  className="font-mono text-center text-[17px] text-[#0066ff] font-semibold mt-2 break-words flex-wrap"
+  style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+>
+  {userData?.name || "Loading..."}
+</p>
+
           <div className="flex items-center gap-2">
             {!isEditingDescription ? (
               <>
-                <p className="font-sans text-center text-sm text-slate-400">
+                <p className="font-sans text-center text-[13px] text-slate-400">
                   {description}
                 </p>
                 <button
