@@ -605,14 +605,28 @@ const handleDownload = (url) => {
       )}
                   </>
                 ) : (
-                  <div className='flex justify-center'>
-                  <button
-                    onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
-                    className="block w-full text-xs text-green-500 hover:bg-green-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-green-600"
-                  >
-                    <FaGlobe size={12} />
-                    Translate to {selectedLanguage.toUpperCase()}
-                  </button>
+                  <div className=''>
+                  {/* Language Selection Dropdown */}
+                  <select onChange={(e) => handleLanguageSelect(e.target.value)} className='text-green-500 text-center text-sm' value={selectedLanguage || ""}>
+                      <option value="" className="text-gray-400 text-sm">Translate</option>
+                      <option value="hi" className="text-gray-400">Hindi</option>
+                      <option value="ta" className="text-gray-400">Tamil</option>
+                      <option value="ml" className="text-gray-400">Malayalam</option>
+                      <option value="kn" className="text-gray-400">Kannada</option>
+                      <option value="en" className="text-gray-400">English</option>
+                    </select>
+
+                    {/* Show the "OK" button after a language is selected */}
+                    {selectedLanguage !== "Translate" && showOkButton && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
+            className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
+          >
+            OK
+          </button>
+        </div>
+      )}
                   </div>
                 )}
               </div>
