@@ -94,7 +94,7 @@ const generateAIAnswer = async (textToTranslate, targetLanguage) => {
 
 const handleTranslateMessage = async (body, targetLanguage) => {
   const translatedText = await generateAIAnswer(body, targetLanguage);
-  alert(`Translated to ${targetLanguage.toUpperCase()}: ${translatedText}`);
+  alert(`Translated to ${targetLanguage}: ${translatedText}`);
   setShowOkButton(false); // Hide the "OK" button after translation
 };
 
@@ -558,81 +558,159 @@ const handleDownload = (url) => {
             ))}
           </div>
         )}
+         {/* Time */}
+         <span style={{ fontSize: "10px" }}>
+            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
 
         {/* Options */}
-        {!isImageMessage && (
-          <div className="absolute top-1 right-0 px-2">
-            <FaEllipsisV className={`cursor-pointer hover:text-black ${isCurrentUser ? "text-white" : "text-black"}`} onClick={() => toggleMenu(msg.$id)} size={11} />
-            {selectedMenu === msg.$id && (
-              <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
-                {isCurrentUser ? (
-                  <>
-                    <button
-                      onClick={() => handleDeleteMessage(msg.$id)}
-                      className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
-                    >
-                      <FaTrash size={12} />
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleEditMessage(msg.$id, msg.body)}
-                      className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
-                    >
-                      <FaEdit size={12} />
-                      Edit
-                    </button>
+{!isImageMessage && (
+  <div className="absolute top-1 right-0 px-2">
+    <FaEllipsisV
+      className={`cursor-pointer hover:text-black ${isCurrentUser ? "text-white" : "text-black"}`}
+      onClick={() => toggleMenu(msg.$id)}
+      size={11}
+    />
+    {selectedMenu === msg.$id && (
+      <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
+        {isCurrentUser ? (
+          <>
+            <button
+              onClick={() => handleDeleteMessage(msg.$id)}
+              className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+            >
+              <FaTrash size={12} />
+              Delete
+            </button>
+            <button
+              onClick={() => handleEditMessage(msg.$id, msg.body)}
+              className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
+            >
+              <FaEdit size={12} />
+              Edit
+            </button>
 
-                    {/* Language Selection Dropdown */}
-                    <select onChange={(e) => handleLanguageSelect(e.target.value)} className='text-green-500 text-center text-sm' value={selectedLanguage || ""}>
-                      <option value="" className="text-gray-400 text-sm">Translate</option>
-                      <option value="hi" className="text-gray-400">Hindi</option>
-                      <option value="ta" className="text-gray-400">Tamil</option>
-                      <option value="ml" className="text-gray-400">Malayalam</option>
-                      <option value="kn" className="text-gray-400">Kannada</option>
-                      <option value="en" className="text-gray-400">English</option>
-                    </select>
+            {/* Language Selection Dropdown */}
+            <select
+              onChange={(e) => {
+                handleLanguageSelect(e.target.value);
+                setShowOkButton(true); // Ensure OK button shows up immediately after language selection
+              }}
+              className="text-green-500 text-center text-sm"
+              value={selectedLanguage || ""}
+            >
+              <option value="" className="text-gray-400 text-sm">
+                Translate
+              </option>
+              <option value="Telugu" className="text-gray-400 text-sm">
+                Telugu
+              </option>
+              <option value="Hindi" className="text-gray-400">
+                Hindi
+              </option>
+              <option value="Tamil" className="text-gray-400">
+                Tamil
+              </option>
+              <option value="Malayalam" className="text-gray-400">
+                Malayalam
+              </option>
+              <option value="Kannada" className="text-gray-400">
+                Kannada
+              </option>
+              <option value="English" className="text-gray-400">
+                English
+              </option>
+            </select>
 
-                    {/* Show the "OK" button after a language is selected */}
-                    {selectedLanguage !== "Translate" && showOkButton && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
-            className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
-          >
-            OK
-          </button>
-        </div>
-      )}
-                  </>
-                ) : (
-                  <div className=''>
-                  {/* Language Selection Dropdown */}
-                  <select onChange={(e) => handleLanguageSelect(e.target.value)} className='text-green-500 text-center text-sm' value={selectedLanguage || ""}>
-                      <option value="" className="text-gray-400 text-sm">Translate</option>
-                      <option value="hi" className="text-gray-400">Hindi</option>
-                      <option value="ta" className="text-gray-400">Tamil</option>
-                      <option value="ml" className="text-gray-400">Malayalam</option>
-                      <option value="kn" className="text-gray-400">Kannada</option>
-                      <option value="en" className="text-gray-400">English</option>
-                    </select>
-
-                    {/* Show the "OK" button after a language is selected */}
-                    {selectedLanguage !== "Translate" && showOkButton && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
-            className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
-          >
-            OK
-          </button>
-        </div>
-      )}
-                  </div>
-                )}
+            {/* Show the "OK" button after a language is selected */}
+            {selectedLanguage !== "Translate" && showOkButton && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
+                  className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
+                >
+                  OK
+                </button>
               </div>
             )}
+          </>
+        ) : (
+          <div className="">
+            {/* Language Selection Dropdown */}
+            <select
+              onChange={(e) => {
+                handleLanguageSelect(e.target.value);
+                setShowOkButton(true); // Ensure OK button shows up immediately after language selection
+              }}
+              className="text-green-500 text-center text-sm"
+              value={selectedLanguage || ""}
+            >
+              <option value="" className="text-gray-400 text-sm">
+                Translate
+              </option>
+              <option value="Telugu" className="text-gray-400 text-sm">
+                Telugu
+              </option>
+              <option value="Hindi" className="text-gray-400">
+                Hindi
+              </option>
+              <option value="Tamil" className="text-gray-400">
+                Tamil
+              </option>
+              <option value="Malayalam" className="text-gray-400">
+                Malayalam
+              </option>
+              <option value="Kanada" className="text-gray-400">
+                Kannada
+              </option>
+              <option value="English" className="text-gray-400">
+                English
+              </option>
+            </select>
+
+            {/* Show the "OK" button after a language is selected */}
+            {selectedLanguage !== "Translate" && showOkButton && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => handleTranslateMessage(msg.body, selectedLanguage)} // Pass the message and selected language
+                  className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
+                >
+                  OK
+                </button>
+              </div>
+            )}
+            
           </div>
         )}
+        
+      </div>
+    )}
+    
+  </div>
+)}
+
+{/* For image messages, only show the delete option */}
+{isImageMessage && isCurrentUser && (
+  <div className="absolute top-1 right-0 px-2">
+    <FaEllipsisV
+      className={`cursor-pointer hover:text-black ${isCurrentUser ? "text-white" : "text-black"}`}
+      onClick={() => toggleMenu(msg.$id)}
+      size={11}
+    />
+    {selectedMenu === msg.$id && (
+      <div className="absolute right-0 top-5 shadow-md bg-white rounded-lg p-2 z-30" style={{ minWidth: "120px" }}>
+        <button
+          onClick={() => handleDeleteMessage(msg.$id)}
+          className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
+        >
+          <FaTrash size={12} />
+          Delete
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
       </div>
     </div>
   );
