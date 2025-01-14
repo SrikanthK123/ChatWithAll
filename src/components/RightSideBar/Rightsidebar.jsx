@@ -3,9 +3,9 @@ import React, { useState, useRef, useEffect, createContext, useContext } from "r
 import { FaCog, FaBell, FaUser, FaTimes, FaPen } from "react-icons/fa";
 import { useUser } from "../../UseContext";
 import { Link, useNavigate } from "react-router-dom";
-import { account, storage, databases } from "../../lib/appwrite";
+import { account, storage, databases,client } from "../../lib/appwrite";
 import PropTypes from "prop-types";
-import { ID, Permission, Role } from "appwrite";
+import { ID, Permission, Role,Query } from "appwrite";
 import toast from "react-hot-toast";
 
 
@@ -19,7 +19,9 @@ const Rightsidebar = () => {
   const [description, setDescription] = useState("Hey there! I am using Chat-app");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [userData, setUserData] = useState(null);
-  
+  const [images, setImages] = useState([]);
+  const [showAllImages, setShowAllImages] = useState(false);
+
 
   const buttonRef = useRef(null);
   const { user,loginUser, logoutUser } = useUser();
@@ -182,6 +184,73 @@ const Rightsidebar = () => {
       console.error("Logout failed:", error);
     }
   };
+// Function to fetch initial images
+const fetchImages = async () => {
+  try {
+    const pageSize = 10;
+    let allImages = [];
+    let offset = 0;
+
+    while (true) {
+      const response = await databases.listDocuments(
+        import.meta.env.VITE_DATABASE_ID_2, // Database ID
+        import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2, // Collection ID
+        [
+          Query.limit(pageSize), // Limit number of images per request
+          Query.offset(offset), // Set the offset for pagination
+        ]
+      );
+
+      if (response.documents.length === 0) break; // Exit if no more images are found
+
+      const fetchedImages = response.documents.flatMap(doc => doc.imageUrl || []);
+      allImages = [...allImages, ...fetchedImages]; // Add to the existing list of images
+
+      offset += pageSize; // Increase the offset for the next page
+    }
+
+    setImages(allImages); // Update state with all fetched images
+  } catch (error) {
+    console.error("Error fetching images:", error);
+  }
+};
+
+// useEffect for fetching images initially and subscribing to real-time updates
+useEffect(() => {
+  fetchImages();
+
+  const unsubscribe = client.subscribe(
+    `databases.${import.meta.env.VITE_DATABASE_ID_2}.collections.${import.meta.env.VITE_COLLECTION_ID_GROUP_MESSAGE_2}.documents`,
+    (response) => {
+      if (response.events.includes('databases.documents.create')) {
+        // Handle new images created
+        setImages((prevImages) => {
+          const newImage = response.payload.imageUrl;
+          return prevImages.some(image => image === newImage) ? prevImages : [...prevImages, newImage];
+        });
+      }
+
+      if (response.events.includes('databases.documents.delete')) {
+        // Handle image deletions
+        const deletedImageUrl = response.payload.imageUrl;
+        
+        // Immediately remove the deleted image from the state to reflect it in UI
+        setImages((prevImages) => prevImages.filter(image => image !== deletedImageUrl));
+      }
+
+      if (response.events.includes('databases.documents.update')) {
+        // Handle image updates (e.g., changing the imageUrl)
+        const updatedImageUrl = response.payload.imageUrl;
+        setImages((prevImages) => prevImages.map(image => image === updatedImageUrl ? updatedImageUrl : image));
+      }
+    }
+  );
+
+  return () => unsubscribe(); // Cleanup the subscription when the component is unmounted
+}, []); // Empty dependency array to run only once on mount
+
+  
+  
 
   return (
     <>
@@ -226,7 +295,7 @@ const Rightsidebar = () => {
   className="font-mono text-center text-[17px] text-[#0066ff] font-semibold mt-2 break-words flex-wrap"
   style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
 >
-  {userData?.name || "Loading..."}
+  {userData?.name  || "Loading..."} 
 </p>
 
           <div className="flex items-center gap-2">
@@ -263,27 +332,41 @@ const Rightsidebar = () => {
           </div>
         </div>
 
-        <div className="p-2">
-          <h1>Media</h1>
-          <hr className="my-1" />
-          <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 py-2">
-            {MediaImages.map((MItem, index) => (
-              <img
-                key={index}
-                src={MItem.Medimage}
-                className="w-24 h-14 object-cover rounded-md flex-shrink-0 cursor-pointer hover:opacity-50"
-                alt="media"
-              />
-            ))}
-          </div>
-          <ul className="space-y-3 pt-3">
+{/* Shared Images Section */}
+<div className="px-4 mt-4">
+  <h2 className="text-lg font-semibold mb-2">Shared Images</h2>
+
+  {/* Container for shared images with scroll */}
+  <div
+    className={`grid grid-cols-2 gap-2 transition-all duration-300 overflow-y-auto right-sidebar`}
+    style={{
+      maxHeight: showAllImages ? "auto" : "12rem", // Adjust height based on 'showAllImages'
+    }}
+  >
+    {images.length > 0 ? (
+      images.map((image, index) => (
+        <img
+          key={index}
+          src={image}
+          alt={`Shared ${index + 1}`}
+          className="w-full h-24 object-cover rounded-lg shadow-md cursor-pointer"
+        />
+      ))
+    ) : (
+      <p className="text-slate-400 text-center mt-4">No images to display.</p>
+    )}
+  </div>
+  
+
+</div>
+<ul className="space-y-3 pt-3">
             <SidebarItem label="Notifications" icon={<FaBell />} />
             <Link to="/Profile">
               <SidebarItem label="Profile" icon={<FaUser />} />
             </Link>
-            <SidebarItem label="Settings" icon={<FaCog />} />
+            {/*<SidebarItem label="Settings" icon={<FaCog />} />*/}
           </ul>
-        </div>
+
 
         <div className="absolute bottom-4 left-0 w-full flex justify-center">
           <button

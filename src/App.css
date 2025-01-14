@@ -317,3 +317,25 @@ background-position: left, right;
   border-style: solid;
   border-color: #333 transparent transparent transparent;
 }
+/* Hide the scrollbar symbol for desktop and mobile */
+@media (min-width: 768px) {
+  .right-sidebar {
+    overflow-y: auto;
+  }
+
+  /* Hide the scrollbar on webkit browsers (Chrome, Safari, etc.) */
+  .right-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar on Firefox */
+  .right-sidebar {
+    scrollbar-width: none; /* Firefox */
+  }
+
+  /* Hide scrollbar in Internet Explorer 10+ */
+  .right-sidebar {
+    -ms-overflow-style: none;
+  }
+}
+
