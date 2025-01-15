@@ -334,7 +334,7 @@ useEffect(() => {
 
 {/* Shared Images Section */}
 <div className="px-4 mt-4">
-  <h2 className="text-lg font-semibold mb-2">Shared Images</h2>
+  <h2 className="text-lg font-semibold mb-2 text-cyan-300">Shared Images</h2>
 
   {/* Container for shared images with scroll */}
   <div
@@ -353,7 +353,7 @@ useEffect(() => {
         />
       ))
     ) : (
-      <p className="text-slate-400 text-center mt-4">No images to display.</p>
+      <p className="text-[#f70776] text-center mt-4 font-semibold">No images</p>
     )}
   </div>
   

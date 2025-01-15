@@ -723,7 +723,55 @@ const handleDownload = (url) => {
       <p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>
     </DialogHeader>
     <DialogBody className="flex justify-center items-center min-h-[65vh]">
-      <img src={dialogImage} alt="Shared" className="max-w-full max-h-[65vh] rounded-lg transform hover:scale-105 transition duration-300" />
+      
+      
+    <div className="container3D noselect">
+  <div className="canvas">
+    <div className="tracker tr-1"></div>
+    <div className="tracker tr-2"></div>
+    <div className="tracker tr-3"></div>
+    <div className="tracker tr-4"></div>
+    <div className="tracker tr-5"></div>
+    <div className="tracker tr-6"></div>
+    <div className="tracker tr-7"></div>
+    <div className="tracker tr-8"></div>
+    <div className="tracker tr-9"></div>
+    <div id="card">
+      <div className="card-content">
+        <div className="card-glare"></div>
+        <div className="cyber-lines">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        
+        <img 
+          src={dialogImage} 
+          alt="Shared" 
+          className="w-full h-full object-cover rounded-lg transform hover:scale-105 transition duration-300" 
+        />
+        <div className="title">CYBER<br />CARD</div>
+        <div className="glowing-elements">
+          <div className="glow-1"></div>
+          <div className="glow-2"></div>
+          <div className="glow-3"></div>
+        </div>
+        <div className="subtitle">
+          <span>Shared Image by</span>
+          <span className="highlight"> {dialogUsername}</span>
+        </div>
+        <div className="card-particles">
+          <span></span><span></span><span></span> <span></span><span></span
+          ><span></span>
+        </div>
+        <div className="corner-elements">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div className="scan-line"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
     </DialogBody>
     <DialogFooter>
       <button onClick={closeDialog} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>Close</button>

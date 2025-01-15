@@ -564,7 +564,7 @@ const closeModalImage = () => {
       <div className="flex-grow overflow-y-auto p-4 max-h-[82vh]">
         {loading ? (
           /* From Uiverse.io by adamgiebl */ 
-<section className="dots-container">
+<section className="dots-container1">
   <div className="dot"></div>
   <div className="dot"></div>
   <div className="dot"></div>
