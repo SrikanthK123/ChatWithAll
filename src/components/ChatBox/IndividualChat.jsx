@@ -748,7 +748,7 @@ const handleDownload = (url) => {
         <img 
           src={dialogImage} 
           alt="Shared" 
-          className="w-full h-full object-cover rounded-lg transform hover:scale-105 transition duration-300" 
+          className="w-full h-full object-center rounded-lg transform hover:scale-105 transition duration-300" 
         />
         <div className="subtitle">
           <span className='text-cyan-300'>Shared Image by</span>

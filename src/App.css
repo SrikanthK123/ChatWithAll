@@ -341,7 +341,7 @@ background-position: left, right;
 
 .container3D {
   position: relative;
-  width: 280px;
+  width: 350px;
   height: 390px;
   transition: 200ms;
   background-size: cover;
