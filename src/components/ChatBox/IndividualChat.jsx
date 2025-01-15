@@ -55,6 +55,7 @@ const [selectedLanguage, setSelectedLanguage] = useState(); // Default to Telugu
 const [showOkButton, setShowOkButton] = useState(false);
 
 
+
 const generateAIAnswer = async (textToTranslate, targetLanguage) => {
   const API_KEY = GEMINI_API_KEY;
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
@@ -749,16 +750,11 @@ const handleDownload = (url) => {
           alt="Shared" 
           className="w-full h-full object-cover rounded-lg transform hover:scale-105 transition duration-300" 
         />
-        <div className="title">CYBER<br />CARD</div>
-        <div className="glowing-elements">
-          <div className="glow-1"></div>
-          <div className="glow-2"></div>
-          <div className="glow-3"></div>
-        </div>
         <div className="subtitle">
-          <span>Shared Image by</span>
-          <span className="highlight"> {dialogUsername}</span>
+          <span className='text-cyan-300'>Shared Image by</span>
+          <span className="highlight "> {dialogUsername}</span>
         </div>
+       
         <div className="card-particles">
           <span></span><span></span><span></span> <span></span><span></span
     ><span></span>

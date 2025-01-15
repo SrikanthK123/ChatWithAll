@@ -22,6 +22,23 @@ const Leftsidebar = () => {
   const [userData, setUserData] = useState(null); 
   const [searchQuery, setSearchQuery] = useState(""); // State to store search query
 
+
+
+  const formatTimestamp = (isoString) => {
+    if (!isoString) return "N/A"; // Handle undefined or null timestamps
+    const date = new Date(isoString); // Parse the ISO string
+    const options = {
+      year: 'numeric',
+      month: 'short', // e.g., "Jan"
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true, // Optional: For 12-hour format with AM/PM
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
   // Fetch authenticated user data
   useEffect(() => {
     const getUserData = async () => {
@@ -187,6 +204,7 @@ const Leftsidebar = () => {
               label={`${user.name} (You)`}
               imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user https://img.freepik.com/free-vector/robotic-artificial-intelligence-technology-smart-lerning-from-bigdata_1150-48136.jpg?t=st=1734702821~exp=1734706421~hmac=ae290813fa3cae9ca912cfa71ca3a1aee25d98e2c90250b4b6471aba132a3013&w=900
               style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-microchip-background-vector-digital-transformation-concept_53876-112222.jpg?t=st=1734702333~exp=1734705933~hmac=dba4e2f955532d862555b5f9887b5dad4229fd2e584da90474be3c3aabe46c53&w=740
+              //activeUpdate="Online"
             />
           )}
            
@@ -196,21 +214,25 @@ const Leftsidebar = () => {
              label={`Chat With AI`}
              imageUrl="https://thumbs.dreamstime.com/b/concept-man-interacting-ai-technology-future-305771501.jpg" // Placeholder image for current user Image ----> https://emiwebs.com/wp-content/uploads/AI-business-optimizatios.jpg 
              style={{ backgroundColor:'#0891b2 ',color:'white'}} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-robot-cyborg-illustrations_24640-134419.jpg?t=st=1734702399~exp=1734705999~hmac=3bc66e499d031a323aaa3b638938861b6052d8fd9287cb8edac28e0bab9cd6ec&w=740
+             //activeUpdate="Online"
            /></p></Link>
 
           {/* Map through other users */}
-          {Array.from(new Map(userData.map((user) => [user.username, user]))).map(
-            ([_, user]) => (
-              <SidebarItem
-                key={user.$id}
-                userId={user.$id}
-                label={user.username}
-                personalMessage="Online"
-                imageUrl={`https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 4)}.jpg`}
-                onClick={() => handleUserClick(user.username, user.$id)}
-              />
-            )
-          )}
+          {/* Map through other users */}
+{Array.from(new Map(userData.map((user) => [user.username, user]))).map(
+  ([_, user]) => (
+    <SidebarItem
+      key={user.$id}
+      userId={user.$id}
+      label={user.username}
+      personalMessage="Online"
+      imageUrl={`https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 4)}.jpg`}
+      onClick={() => handleUserClick(user.username, user.$id)}
+      activeUpdate={formatTimestamp(user.$updatedAt)} // Use updatedAt here
+    />
+  )
+)}
+
         </>
       ) : error ? (
         <p className="text-red-500">Failed to fetch users</p>
@@ -226,19 +248,25 @@ const Leftsidebar = () => {
 };
 
 // Reusable Sidebar Item Component with image and name
-const SidebarItem = ({ label, imageUrl, personalMessage, userId, onClick,style }) => (
-  <div className="flex items-center gap-3 hover:bg-slate-600 p-2 rounded-md transition-all cursor-pointer " onClick={onClick} style={style}>
-    <img src={imageUrl} alt={label} className="w-10 h-10 rounded-full" />
-    <div className="flex flex-col">
-      <p className="font-medium text-sm text-white">{label}</p>
-      <p className="text-xs text-gray-400">{personalMessage}</p>
-    </div>
-    {userId && onClick && (
-      <button className="ml-auto text-blue-400 text-xs">
-        Chat
-      </button>
-    )}
+const SidebarItem = ({ label, imageUrl, personalMessage, userId, onClick,style,activeUpdate, }) => (
+  <div
+  className="flex items-center gap-3 hover:bg-slate-600 p-2 rounded-md transition-all cursor-pointer"
+  onClick={onClick}
+  style={style}
+>
+  <img src={imageUrl} alt={label} className="w-10 h-10 rounded-full" />
+  <div className="flex flex-col">
+    <p className="font-medium text-sm text-white">{label}</p>
+    <p className="text-xs text-gray-400">
+    {personalMessage || "Online"} {/*{activeUpdate ? activeUpdate : "Offline"}*/}
+    </p>
   </div>
+  {userId && onClick && (
+    <button className="ml-auto text-blue-400 text-xs">
+      Chat
+    </button>
+  )}
+</div>
 );
 
 export default Leftsidebar; 
