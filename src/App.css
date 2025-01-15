@@ -338,12 +338,14 @@ background-position: left, right;
     -ms-overflow-style: none;
   }
 }
-/* From Uiverse.io by 00Kubi */ 
+
 .container3D {
   position: relative;
-  width: 350px;
+  width: 280px;
   height: 390px;
   transition: 200ms;
+  background-size: cover;
+  
 }
 
 .container3D:active {

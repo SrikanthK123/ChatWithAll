@@ -490,6 +490,7 @@ const handleDownload = (url) => {
 };
 // Translating text 
 
+
   
   return (
     <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
@@ -760,7 +761,7 @@ const handleDownload = (url) => {
         </div>
         <div className="card-particles">
           <span></span><span></span><span></span> <span></span><span></span
-          ><span></span>
+    ><span></span>
         </div>
         <div className="corner-elements">
           <span></span><span></span><span></span><span></span>
