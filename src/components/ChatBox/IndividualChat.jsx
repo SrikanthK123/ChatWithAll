@@ -727,7 +727,7 @@ const handleDownload = (url) => {
     <DialogBody className="flex justify-center items-center min-h-[65vh]">
       
       
-    <div className="container3D noselect">
+    <div className="container3D  noselect">
   <div className="canvas">
     <div className="tracker tr-1"></div>
     <div className="tracker tr-2"></div>
@@ -750,8 +750,8 @@ const handleDownload = (url) => {
           alt="Shared" 
           className="w-full h-full object-center rounded-lg transform hover:scale-105 transition duration-300" 
         />
-        <div className="subtitle">
-          <span className='text-cyan-300'>Shared Image by</span>
+        <div className="subtitle bg-[#001529] py-1" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}>
+          <span className='text-cyan-300'>Image Shared by</span>
           <span className="highlight "> {dialogUsername}</span>
         </div>
        
