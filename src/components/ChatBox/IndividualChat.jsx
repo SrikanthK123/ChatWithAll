@@ -719,13 +719,12 @@ const handleDownload = (url) => {
 })}
 
 
-  {/* Dialog */}
+  {/* Dialog */} {/** https://img.freepik.com/free-vector/abstract-classic-blue-background_23-2148420664.jpg?t=st=1737134809~exp=1737138409~hmac=439fd9c22c93090c2080e82444263f30c0068682b2367de0f91c2fba4653a61e&w=1060 */}
   <Dialog open={dialogOpen} handler={closeDialog} className="" style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg')`, backgroundSize: "100% 100%", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
     <DialogHeader className="text-2xl text-cyan-300 font-bold">
-      <p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>
+      {/*<p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>*/}
     </DialogHeader>
     <DialogBody className="flex justify-center items-center min-h-[65vh]">
-      
       
     <div className="container3D  noselect">
   <div className="canvas">
@@ -739,6 +738,7 @@ const handleDownload = (url) => {
     <div className="tracker tr-8"></div>
     <div className="tracker tr-9"></div>
     <div id="card">
+      
       <div className="card-content">
         <div className="card-glare"></div>
         <div className="cyber-lines">

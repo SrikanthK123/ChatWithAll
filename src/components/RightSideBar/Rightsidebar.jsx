@@ -353,7 +353,7 @@ useEffect(() => {
         />
       ))
     ) : (
-      <p className="text-[#f70776] text-center mt-4 font-semibold">No images</p>
+      <p className="text-[#f70776] text-center mt-4 text-sm font-semibold">Loading Images.....</p>
     )}
   </div>
   

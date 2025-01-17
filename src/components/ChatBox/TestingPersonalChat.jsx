@@ -657,56 +657,90 @@ const closeModalImage = () => {
   )}
 
   {/* Dialog for Image Preview https://img.freepik.com/free-vector/background-abstract-pixel-rain_23-2148359404.jpg?t=st=1736347431~exp=1736351031~hmac=4a7530abe6a57d46273def866542173ac8fdd4628ec8e7891b2709862e3e0b3c&w=1060  https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740 */}
-  <Dialog open={dialogOpen} handler={closeDialog} className="bg-gray-800" style={{
-  backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
-  backgroundSize: '100% 100%',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-}}>
- <DialogHeader
-  className="text-2xl text-cyan-300 font-bold tracking-wide"
-  style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
->
-  <p>{user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}</p>
+  <Dialog
+  open={dialogOpen}
   
-</DialogHeader>
-<p className="text-[11px] text-gray-200 mt-1 mx-2 w-fit p-1 rounded-md bg-[#001529]">
-    Date : {new Date(message.$createdAt).toLocaleDateString()} & Time : {formatTime(new Date(message.timestamp))}
-  </p>
+  className="bg-gray-800"
+  style={{
+    backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
+    backgroundSize: '100% 100%',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }}
+  onClick={(e) => {
+    // Prevent click on the backdrop from closing the dialog
+    if (e.target.classList.contains('dialog-overlay')) {
+      e.stopPropagation();
+    }
+  }}
+>
+  <div className="dialog-overlay">
+    <DialogHeader
+      className="text-2xl text-cyan-300 font-bold tracking-wide"
+      style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
+    >
+      <p>{user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}</p>
+    </DialogHeader>
+    
 
-
-
-    <DialogBody className="flex justify-center items-center min-h-[70vh]">
-      <div className="relative">
-        {/* 3D Image with CSS Effect */}
-        <img
-          src={dialogImage}
-          alt="Preview"
-          className="max-w-full max-h-[65vh] rounded-lg transform transition-transform duration-500 ease-in-out hover:rotate-3d hover:scale-105"
-          style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
-        />
+    <DialogBody className="relative flex justify-center items-center min-h-[65vh]">
+  <div className="absolute top-2 right-2 text-xs text-cyan-500 font-semibold rounded-md z-10  p-2" style={{backgroundColor:'rgba(5, 9, 17, 0.39)'}}>
+    <span>
+      {new Date(message.timestamp).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" })}
+    </span>,
+    
+    <span>
+      {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+    </span>
+  </div>
+  <div className="container3D noselect">
+    <div className="canvas">
+      <div className="tracker tr-1"></div>
+      <div className="tracker tr-2"></div>
+      <div className="tracker tr-3"></div>
+      <div className="tracker tr-4"></div>
+      <div className="tracker tr-5"></div>
+      <div className="tracker tr-6"></div>
+      <div className="tracker tr-7"></div>
+      <div className="tracker tr-8"></div>
+      <div className="tracker tr-9"></div>
+      <div id="card">
+        <div className="card-content">
+          <div className="card-glare"></div>
+          <div className="cyber-lines">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <img 
+            src={dialogImage} 
+            alt="Shared" 
+            className="w-full h-full object-center rounded-lg transform hover:scale-105 transition duration-300" 
+          />
+          <div className="subtitle bg-[#001529] py-1" style={{boxShadow:'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset'}}>
+            <span className='text-cyan-300'>Image Shared by</span>
+            <span className="highlight "> {message.senderName}</span>
+          </div>
+          <div className="card-particles">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div className="corner-elements">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div className="scan-line"></div>
+        </div>
       </div>
-    </DialogBody>
+    </div>
+  </div>
+</DialogBody>
+
     <DialogFooter>
-      <Button
-        variant="text"
-        color="red"
-        onClick={closeDialog}
-        className="mr-1 bg-white"
-      >
-        <span>Close</span>
-      </Button>
-      {/* Download Button */}
-      <Button
-        variant="gradient"
-        color="blue"
-        className="bg-blue-500 hover:bg-blue-600 rounded-xl mx-1"
-        onClick={() => handleDownload(dialogImage)} // Trigger the download action here
-      >
-        <span className="text-white "> <FaDownload className="DownloadingProcessing" size={20}/> </span>
-      </Button>
+     <button onClick={closeDialog} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>Close</button>
+           <button onClick={() => handleDownload(dialogImage)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-2" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>
+             <FaDownload />
+           </button>
     </DialogFooter>
-  </Dialog>
+  </div>
+</Dialog>
+
 </div>
 
 
