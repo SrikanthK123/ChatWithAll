@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash, FaImage,FaDownload, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload, FaEye } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash,FaArrowUp,FaArrowDown,FaCaretUp,FaImage,FaDownload,FaCaretDown, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload, FaEye } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
@@ -49,7 +49,8 @@ const [isModalVisible, setModalVisible] = useState(false);
 const [modalImage, setModalImage] = useState("");
 const [modalTitle, setModalTitle] = useState("");
 const [modalDateTime, setModalDateTime] = useState("");
-
+const [chatDetails, setChatDetails] = useState(false);
+const [loadingChatInfo, setLoadingChatInfo] = useState(true);
 
 
 const openDialog = (imageUrl, username) => {
@@ -67,50 +68,51 @@ const closeDialog = () => {
     setModalTitle(title);
     setModalDateTime(dateTime);
     setModalVisible(true);
-  };
+};
 
-  const openModal = (info) => {
+const openModal = (info) => {
     setCurrentInfo(info);
     setIsModalOpen(true);
-  };
+};
 
-  const closeModal = () => {
+const closeModal = () => {
     setIsModalOpen(false);
     setCurrentInfo(null);
-  };
-  // Modal Pop-Up
-  const Info = [
+};
+
+// Modal Pop-Up Information
+const Info = [
     {
-      title: "Camera",
-      ImgUrl: "https://img.freepik.com/free-vector/couple-photo-booth-concept-illustration_114360-4712.jpg",
-      Para: "Please grant camera access to use this feature.",
+        title: "Camera",
+        ImgUrl: "https://img.freepik.com/free-vector/couple-photo-booth-concept-illustration_114360-4712.jpg",
+        Para: "Please grant camera access to use this feature.",
     },
     {
-      title: "Image",
-      ImgUrl: "https://img.freepik.com/free-vector/concept-with-selfie-social-application_23-2148280535.jpg?t=st=1735050348~exp=1735053948~hmac=4a3651ffe939d89c3a4e14f1c9a88622cb9b97e3e486a5b982e27e90077802b2&w=740",
-      Para: "Access your image gallery to upload or select images.",
+        title: "Image",
+        ImgUrl: "https://img.freepik.com/free-vector/concept-with-selfie-social-application_23-2148280535.jpg?t=st=1735050348~exp=1735053948~hmac=4a3651ffe939d89c3a4e14f1c9a88622cb9b97e3e486a5b982e27e90077802b2&w=740",
+        Para: "Access your image gallery to upload or select images.",
     },
     {
-      title: "Video",
-      ImgUrl: "https://img.freepik.com/free-vector/telecommuting-concept_52683-36509.jpg?t=st=1735050139~exp=1735053739~hmac=0e45f14d710514b76fc3521ce7b2d256ffa678a6c10fffe537876048241879be&w=1060",
-      Para: "Enable video access to record or upload videos.",
+        title: "Video",
+        ImgUrl: "https://img.freepik.com/free-vector/telecommuting-concept_52683-36509.jpg?t=st=1735050139~exp=1735053739~hmac=0e45f14d710514b76fc3521ce7b2d256ffa678a6c10fffe537876048241879be&w=1060",
+        Para: "Enable video access to record or upload videos.",
     },
     {
-      title: "Location",
-      ImgUrl: "https://img.freepik.com/free-vector/directions-concept-illustration_114360-5203.jpg?t=st=1735050039~exp=1735053639~hmac=ff3e8bbd649744d09379a7b317ea90456935739c0f622819deca5c34fc83dad0&w=740",
-      Para: "Allow location access to use this feature effectively.",
+        title: "Location",
+        ImgUrl: "https://img.freepik.com/free-vector/directions-concept-illustration_114360-5203.jpg?t=st=1735050039~exp=1735053639~hmac=ff3e8bbd649744d09379a7b317ea90456935739c0f622819deca5c34fc83dad0&w=740",
+        Para: "Allow location access to use this feature effectively.",
     },
     {
-      title: "File",
-      ImgUrl: "https://img.freepik.com/free-vector/concept-landing-page-transfer-files_23-2148298755.jpg?t=st=1735049761~exp=1735053361~hmac=8856396895a74df16322704efc6a34739519707a6d26b0a496440f34c830ca81&w=740",
-      Para: "Grant file access to upload and manage your files.",
+        title: "File",
+        ImgUrl: "https://img.freepik.com/free-vector/concept-landing-page-transfer-files_23-2148298755.jpg?t=st=1735049761~exp=1735053361~hmac=8856396895a74df16322704efc6a34739519707a6d26b0a496440f34c830ca81&w=740",
+        Para: "Grant file access to upload and manage your files.",
     },
     {
-      title: "Money",
-      ImgUrl: "https://img.freepik.com/free-vector/volunteers-help-work_24908-58096.jpg?t=st=1735049647~exp=1735053247~hmac=54ad1f62fff71c00d1ec0280329b7c62df54b6239916bae30afec967a2be630c&w=740",
-      Para: "Provide access to manage your financial resources securely.",
+        title: "Money",
+        ImgUrl: "https://img.freepik.com/free-vector/volunteers-help-work_24908-58096.jpg?t=st=1735049647~exp=1735053247~hmac=54ad1f62fff71c00d1ec0280329b7c62df54b6239916bae30afec967a2be630c&w=740",
+        Para: "Provide access to manage your financial resources securely.",
     },
-  ];
+];
   
   // Fetch current logged-in user
   useEffect(() => {
@@ -401,6 +403,7 @@ const closeDialog = () => {
     setError(null);
   
     try {
+      // Upload the file to the storage
       const response = await storage.createFile(
         '67625c290014521446c8', // Your BucketID
         ID.unique(),           // Unique file ID
@@ -410,22 +413,30 @@ const closeDialog = () => {
       const fileId = response.$id;
       const fileUrl = await storage.getFileView('67625c290014521446c8', fileId);
   
+      // Save the file reference in the database
       await saveImageReference(fileId, fileUrl.href);
   
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          senderName: user.name,
-          receiverName: username,
-          timestamp: new Date().toISOString(),
-          imageUrl: [fileUrl.href],
-          $id: ID.unique(),
-        },
-      ]);
+      // Update local state if unique
+      setMessages((prevMessages) => {
+        const isDuplicate = prevMessages.some((msg) => msg.imageUrl?.includes(fileUrl.href));
+        if (!isDuplicate) {
+          return [
+            ...prevMessages,
+            {
+              senderName: user.name,
+              receiverName: username,
+              timestamp: new Date().toISOString(),
+              imageUrl: [fileUrl.href],
+              $id: ID.unique(),
+            },
+          ];
+        }
+        return prevMessages;
+      });
   
       setUploading(false);
       setSuccess('Image uploaded successfully!');
-      setIsImageSelected(false); // Reset the state
+      setIsImageSelected(false); // Reset state
     } catch (err) {
       setUploading(false);
       setError('Error uploading image: ' + err.message);
@@ -433,16 +444,21 @@ const closeDialog = () => {
     }
   };
   
+  
 
 // Save or update file reference in the database
 const saveImageReference = async (fileId, imageUrl) => {
   try {
+    // Check if a message for the user already exists
     const existingDocument = messages.find((msg) => msg.senderId === user.id);
 
     if (existingDocument) {
-      // Update the existing document
-      const updatedImageUrls = [...existingDocument.imageUrl, imageUrl];
+      // Avoid duplicate image URLs
+      const updatedImageUrls = existingDocument.imageUrl.includes(imageUrl)
+        ? existingDocument.imageUrl
+        : [...existingDocument.imageUrl, imageUrl];
 
+      // Update the document with the new URLs
       await databases.updateDocument(
         import.meta.env.VITE_DATABASE_ID_2,
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
@@ -452,10 +468,10 @@ const saveImageReference = async (fileId, imageUrl) => {
 
       console.log('Updated image reference in existing document');
     } else {
-      // Create a new document if none exists
+      // Create a new document
       const newDocument = {
         senderName: user.name,
-        receiverName: username, // Set appropriate receiver Name
+        receiverName: username,
         timestamp: new Date().toISOString(),
         isRead: false,
         imageUrl: [imageUrl],
@@ -477,8 +493,9 @@ const saveImageReference = async (fileId, imageUrl) => {
   }
 };
 
+
 // Fetch messages with images (useEffect)
-useEffect(() => {
+
   const fetchMessagesWithImages = async () => {
     try {
       const response = await databases.listDocuments(
@@ -486,20 +503,28 @@ useEffect(() => {
         import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2
       );
   
-      // Ensure `imageUrl` is defined and is an array for all documents
-      const updatedMessages = response.documents.map((message) => ({
-        ...message,
-        imageUrl: message.imageUrl || [],
-      }));
+      const uniqueMessages = [];
+      const seenIds = new Set();
   
-      console.log('Fetched messages with images:', updatedMessages);
-      return updatedMessages;
+      // Filter duplicates by `$id`
+      response.documents.forEach((message) => {
+        if (!seenIds.has(message.$id)) {
+          uniqueMessages.push({
+            ...message,
+            imageUrl: message.imageUrl || [],
+          });
+          seenIds.add(message.$id);
+        }
+      });
+  
+      setMessages(uniqueMessages);
+      console.log('Fetched unique messages:', uniqueMessages);
     } catch (error) {
       console.error('Error fetching messages with images:', error);
-      return [];
     }
   };
   
+  useEffect(() => {
 
   fetchMessagesWithImages();
 }, []);
@@ -552,14 +577,81 @@ const closeModalImage = () => {
   ImageModalOpen(false);
 };
 
+// Chat Details Condition
+const ChatInfo = () =>{
+  setChatDetails((prev) => !prev);
+}
+useEffect(() => {
+  const timer = setTimeout(() => setLoadingChatInfo(false), 1500); // Simulate 1.5 seconds delay
+  return () => clearTimeout(timer);
+}, [messages]);
+
   return (
     <div className="chat-container flex flex-col h-screen w-screen bg-slate-200">
-      <header className="chat-header bg-[#001529] text-white p-4 flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Chat with {username}</h3>
-        <button onClick={handleLogout} className="text-white hover:text-gray-400">
-          <FaSignOutAlt size={20}/> {/*<spna style={{fontSize:'10px'}} >{user?.name}</spna>*/}
-        </button>
-      </header>
+       <header
+      className={`chat-header bg-[#001529] text-white p-4 flex items-center justify-between transition-all duration-300 ${
+        chatDetails ? 'transform translate-y-0 h-40' : 'transform translate-yb-8 h-16'
+      }`}
+    >
+      <div>
+        <h3 className="text-lg lg:text-base font-semibold">Chat with {username}</h3> {/* Smaller text size for desktop */}
+        <p
+          className="lg:text-[13px] sm:text-[10px] text-blue-700 font-semibold cursor-pointer flex items-center gap-1"
+          onClick={ChatInfo} // Use the updated ChatInfo function
+        >
+          {chatDetails ? (
+            <>
+              See Less <FaCaretUp /> {/* FaCaretUp icon */}
+            </>
+          ) : (
+            <>
+              See More <FaCaretDown /> {/* FaCaretDown icon */}
+            </>
+          )}
+        </p>
+
+        {chatDetails && (
+          <div className="text-sm mt-2 text-gray-300">
+            {/* Show Shared Images in a Horizontal Scrolling Row */}
+            <div className="overflow-x-auto flex space-x-2 mt-2">
+              {loadingChatInfo ? (
+                <div className="text-center text-gray-500">Loading Images...</div> // Show loading text
+              ) : (
+                messages
+                  .filter((message) => message.imageUrl && message.imageUrl.length > 0) // Only messages with images
+                  .map((message, index) => (
+                    message.imageUrl.map((url, imgIndex) => (
+                      <div
+                        key={`${index}-${imgIndex}`}
+                        className="relative w-[40px] h-[40px] sm:w-[60px] sm:h-[60px]"
+                        onClick={() => openDialog(url)}
+                      >
+                      <img
+  src={url}
+  alt={`Shared Image ${imgIndex + 1}`}
+  className="object-cover w-full h-full rounded-md shadow-md cursor-pointer border-2 border-white hover:border-2 hover:border-[#f70776] "
+  style={{
+    boxShadow:
+      'rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset',
+  }}
+/>
+
+
+                      </div>
+                    ))
+                  ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <button onClick={handleLogout} className="text-white hover:text-gray-400 absolute top-5 right-5">
+        <FaSignOutAlt size={20} />
+      </button>
+    </header>
+
+
 
       <div className="flex-grow overflow-y-auto p-4 max-h-[82vh]">
         {loading ? (
@@ -879,44 +971,52 @@ const closeModalImage = () => {
 
      {/* Modal Section */}
      {isModalOpen && currentInfo && (
-        <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900">
-          <div className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg">
-            <div className="flex justify-center mb-4">
-              <div
-                className="w-32 h-32 flex items-center justify-center overflow-hidden rounded-md"
-                style={{
-                  boxShadow: "rgb(32 100 204 / 70%) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
-                }}
-              >
-                <img
-                  className="w-full h-full object-cover mb-3"
-                  src={currentInfo.ImgUrl}
-                  alt={currentInfo.title}
-                />
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold mb-2 text-center">{currentInfo.title} Access</h2>
-            <p className="mb-2 text-gray-600 text-center">{currentInfo.Para}</p>
-            <div className="flex justify-center">
-              <small className="text-red-500 text-xl mb-4 font-mono">Access Soon</small>
-            </div>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => alert(`${currentInfo.title} granted!`)}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Proceed
-              </button>
-            </div>
-          </div>
+  <div
+    className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900 bg-opacity-50 fixed inset-0 z-50"
+    onClick={closeModal} // Close modal when clicking outside
+  >
+    <div
+      className="bg-white w-11/12 sm:w-3/4 md:w-1/2 lg:w-1/3 p-6 rounded-lg shadow-lg"
+      onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking inside
+    >
+      <div className="flex justify-center mb-4">
+        <div
+          className="w-32 h-32 flex items-center justify-center overflow-hidden rounded-md"
+          style={{
+            boxShadow: "rgb(32 100 204 / 70%) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px",
+          }}
+        >
+          <img
+            className="w-full h-full object-cover mb-3"
+            src={currentInfo.ImgUrl}
+            alt={currentInfo.title}
+            aria-labelledby="modal-title"
+          />
         </div>
-      )}
+      </div>
+      <h2 id="modal-title" className="text-xl font-semibold mb-2 text-center">{currentInfo.title} Access</h2>
+      <p className="mb-2 text-gray-600 text-center">{currentInfo.Para}</p>
+      <div className="flex justify-center">
+        <small className="text-red-500 text-xl mb-4 font-mono">Access Soon</small>
+      </div>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={closeModal}
+          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => alert(`${currentInfo.title} granted!`)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Proceed
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 
       {/* Navigation buttons */}
