@@ -823,7 +823,7 @@ const handleDownload = (url) => {
   )}
   <button
     type="submit"
-    className="bg-blue-500 hover:bg-blue-600 text-white w-10 h-8 px-2 rounded-lg flex items-center justify-center"
+    className="bg-blue-500 hover:bg-blue-600 text-white w-10 h-8 px-2 rounded-full flex items-center justify-center"
   >
     <FaLocationArrow />
   </button>
