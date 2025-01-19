@@ -17,6 +17,7 @@
     "emoji-picker-react": "^4.12.0",
     "file-saver": "^2.0.5",
     "firebase": "^11.0.2",
+    "lodash": "^4.17.21",
     "node-appwrite": "^14.1.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",

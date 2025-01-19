@@ -53,6 +53,7 @@ const [checkTranslate, setCheckTranslate] = useState(false);
 const [aiAnswer, setAiAnswer] = useState(null);
 const [selectedLanguage, setSelectedLanguage] = useState(); // Default to Telugu
 const [showOkButton, setShowOkButton] = useState(false);
+const [imageUrlLoaded, setImageUrlLoaded] = useState(false);
 
 
 
@@ -88,11 +89,6 @@ const generateAIAnswer = async (textToTranslate, targetLanguage) => {
     return 'Error occurred while fetching AI response.';
   }
 };
-
-
-
-
-
 const handleTranslateMessage = async (body, targetLanguage) => {
   const translatedText = await generateAIAnswer(body, targetLanguage);
   alert(`Translated to ${targetLanguage}: ${translatedText}`);
@@ -103,9 +99,6 @@ const handleLanguageSelect = (language) => {
   setSelectedLanguage(language);
   setShowOkButton(true); // Show the "OK" button when a language is selected
 };
-
-
-
 
 const openDialog = (imageUrl, username) => {
   setDialogImage(imageUrl);
