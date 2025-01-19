@@ -775,7 +775,7 @@ const handleDownload = (url) => {
 </div>
       <div className="bg-[#001529] px-4 py-3 sticky bottom-0 flex justify-center">
       <form
-  className="flex items-center gap-3 px-4 w-full max-w-3xl rounded-lg"
+  className="flex items-center gap-3  w-full max-w-3xl rounded-lg"
   onSubmit={handleCreateMessage}
 >
   <textarea
@@ -823,7 +823,7 @@ const handleDownload = (url) => {
   )}
   <button
     type="submit"
-    className="bg-blue-500 hover:bg-blue-600 text-white w-10 h-8 rounded-lg flex items-center justify-center"
+    className="bg-blue-500 hover:bg-blue-600 text-white w-10 h-8 px-2 rounded-lg flex items-center justify-center"
   >
     <FaLocationArrow />
   </button>
