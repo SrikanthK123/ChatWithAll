@@ -761,7 +761,7 @@ const handleLanguageSelect = (language) => {
 
 
 
-      <div className="flex-grow overflow-y-auto p-4 max-h-[82vh]">
+      <div className=" flex-1 p-2 overflow-y-auto max-h-[79vh]">
         {loading ? (
           /* From Uiverse.io by adamgiebl */ 
 <section className="dots-container1">
@@ -947,7 +947,7 @@ const handleLanguageSelect = (language) => {
                 onClick={() => toggleMenu(message.$id)}
                 className="text-gray-500 hover:text-black"
               >
-                <FaEllipsisV size={12} />
+                <FaEllipsisV size={11} />
               </button>
 
               {selectedMenu === message.$id && (
@@ -1076,7 +1076,7 @@ const handleLanguageSelect = (language) => {
 
   )}
       </div>
-      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-3 bg-[#001529] justify-center">
+      <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-2 bg-[#001529] justify-center">
     <textarea
       type="text"
       value={messageBody}
@@ -1134,7 +1134,7 @@ const handleLanguageSelect = (language) => {
 
     <button
       type="submit"
-      className="send-button bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center"
+      className="send-button bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center"
     >
       <FaLocationArrow size={18} />
     </button>
@@ -1144,7 +1144,7 @@ const handleLanguageSelect = (language) => {
      {/* Modal Section */}
      {isModalOpen && currentInfo && (
   <div
-    className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-2 bg-slate-900 bg-opacity-50 fixed inset-0 z-50"
+    className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2 bg-slate-900 bg-opacity-50 fixed inset-0 z-50"
     onClick={closeModal} // Close modal when clicking outside
   >
     <div
@@ -1192,12 +1192,12 @@ const handleLanguageSelect = (language) => {
 
 
       {/* Navigation buttons */}
-      <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-3 bg-slate-900">
+      <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-1 bg-slate-900">
         {Info.map((info, index) => (
           <button
             key={index}
             onClick={() => openModal(info)}
-            className={`cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 ${
+            className={`cursor-pointer bg-white relative inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 ${
               index === 0
                 ? "focus-visible:ring-[#FFB300] hover:text-[#41dce4]"
                 : index === 1
