@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 import { saveAs } from 'file-saver';
+import debounce from "lodash/debounce";
 
 
 const TestingPersonalChat = () => {
@@ -58,15 +59,22 @@ const [otherUserTyping, setOtherUserTyping] = useState(false);
 const [selectedLanguage, setSelectedLanguage] = useState(); // Default to Telugu
 const [showOkButton, setShowOkButton] = useState(false);
 
-const openDialogBox = (imageUrl) => {
-  setDialogImage(imageUrl);
-  setDialogOpen(true);
+const openDialog = debounce((imageUrl, username) => {
+  const img = new Image();
+  img.src = imageUrl;
+  img.onload = () => {
+    setDialogImage(imageUrl);
+    setDialogOpen(true);
+  };
+}, 200);
+
+const closeDialog = () => {
+  setDialogOpen(false);
+  setTimeout(() => {
+    setDialogImage("");
+  }, 300);
 };
 
-const closeDialogBox = () => {
-  setDialogOpen(false);
-  setDialogImage("");
-};
   // Function to open the dialog
   const showDialog = (imageUrl, title, dateTime) => {
     setModalImage(imageUrl);
@@ -724,7 +732,7 @@ const handleLanguageSelect = (language) => {
                       <div
                         key={`${index}-${imgIndex}`}
                         className="relative w-[40px] h-[40px] sm:w-[60px] sm:h-[60px]"
-                        onClick={() => openDialogBox(url)}
+                        onClick={() => openDialog(url)}
                       >
                       <img
   src={url}
@@ -840,7 +848,7 @@ const handleLanguageSelect = (language) => {
             {isImageMessage && (
               <div className="image-container mt-2 relative">
                 {message.imageUrl.map((url, index) => (
-                  <div key={index} className="relative" onClick={() => openDialogBox(url)}>
+                  <div key={index} className="relative" onClick={() => openDialog(url)}>
                     {!isCurrentUser && !downloadedImages[url] && (
                       <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
                         See Image
@@ -987,7 +995,7 @@ const handleLanguageSelect = (language) => {
               )}
             </div>
           )}
-          <Dialog open={dialogOpen}  className="" style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg')`, backgroundSize: "100% 100%", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+          <Dialog open={dialogOpen}  className="dialog-background" >
               <DialogHeader className="text-2xl text-cyan-300 font-bold">
                 {/*<p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>*/}
               </DialogHeader>
@@ -1046,7 +1054,7 @@ const handleLanguageSelect = (language) => {
           
               </DialogBody>
               <DialogFooter>
-                <button onClick={closeDialogBox} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>Close</button>
+                <button onClick={closeDialog} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>Close</button>
                 <button onClick={() => handleDownload(dialogImage)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-2" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>
                   <FaDownload />
                 </button>
