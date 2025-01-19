@@ -761,7 +761,7 @@ const handleLanguageSelect = (language) => {
 
 
 
-      <div className=" flex-1 p-2 overflow-y-auto max-h-[73vh]">
+      <div className=" flex-1 p-2 overflow-y-auto max-h-[74vh]">
         {loading ? (
           /* From Uiverse.io by adamgiebl */ 
 <section className="dots-container1">
