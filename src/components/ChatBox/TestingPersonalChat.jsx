@@ -4,10 +4,12 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { account, databases, client ,storage} from "../../lib/appwrite"; // Assuming Appwrite is configured
 import { Query, ID } from "appwrite";
-import { FaLocationArrow, FaEllipsisV, FaTrash,FaArrowUp,FaArrowDown,FaCaretUp,FaImage,FaDownload,FaCaretDown, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload, FaEye } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
+import { FaLocationArrow, FaEllipsisV, FaTrash,FaArrowUp,FaArrowDown,FaCaretUp,FaImage,FaDownload,FaCaretDown,FaLanguage, FaEdit,FaUser,FaSignOutAlt,FaCamera,FaVideo,FaSearchLocation,FaFileAlt,FaDollarSign, FaUpload, FaEye } from "react-icons/fa"; // Added FaEllipsisV and FaTrash
 import EmojiPicker from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import MessageSendPopSound from "../../assets/Images/MessagePop.mp3"
+import axios from "axios";
+import { GEMINI_API_KEY } from "../SecretKeys";
 import {
   Button,
   Dialog,
@@ -51,14 +53,17 @@ const [modalTitle, setModalTitle] = useState("");
 const [modalDateTime, setModalDateTime] = useState("");
 const [chatDetails, setChatDetails] = useState(false);
 const [loadingChatInfo, setLoadingChatInfo] = useState(true);
+const [isTyping, setIsTyping] = useState(false);
+const [otherUserTyping, setOtherUserTyping] = useState(false);
+const [selectedLanguage, setSelectedLanguage] = useState(); // Default to Telugu
+const [showOkButton, setShowOkButton] = useState(false);
 
-
-const openDialog = (imageUrl, username) => {
+const openDialogBox = (imageUrl) => {
   setDialogImage(imageUrl);
   setDialogOpen(true);
 };
 
-const closeDialog = () => {
+const closeDialogBox = () => {
   setDialogOpen(false);
   setDialogImage("");
 };
@@ -586,6 +591,101 @@ useEffect(() => {
   return () => clearTimeout(timer);
 }, [messages]);
 
+// Function to handle user typing
+const handleTyping = (e) => {
+  setIsTyping(true);
+
+  // Emit typing status to the database for the current user
+  databases.updateDocument(
+    import.meta.env.VITE_DATABASE_ID_2,
+    import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
+    user.$id, // User ID for current user
+    { isTyping: true }
+  );
+
+  // Clear typing state after 2 seconds once typing stops
+  setTimeout(() => {
+    setIsTyping(false);
+
+    // Update the typing status in the database
+    databases.updateDocument(
+      import.meta.env.VITE_DATABASE_ID_2,
+      import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2,
+      user.$id,
+      { isTyping: false }
+    );
+  }, 2000); // Adjust delay if needed
+};
+
+useEffect(() => {
+  const unsubscribe = client.subscribe(
+    `databases.${import.meta.env.VITE_DATABASE_ID_2}.collections.${import.meta.env.VITE_COLLECTION_ID_PERSONAL_CHAT_2}.documents`,
+    (response) => {
+      const event = response.payload;
+
+      // Check if the other user is typing
+      if (event.senderName !== username && event.isTyping) {
+        setOtherUserTyping(true);
+
+        // Reset the "typing" indicator after 2 seconds of inactivity
+        setTimeout(() => setOtherUserTyping(false), 2000);
+      }
+    }
+  );
+
+  return () => unsubscribe(); // Clean up on unmount
+}, [username]);
+
+// Translate Languauge
+const generateAIAnswer = async (textToTranslate, targetLanguage) => {
+  const API_KEY = GEMINI_API_KEY;
+  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: `Translate to ${targetLanguage} in short according to text size: ${textToTranslate}` }] }]
+  };
+
+  try {
+    const response = await axios.post(API_URL, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (
+      response.data.candidates &&
+      response.data.candidates[0] &&
+      response.data.candidates[0].content &&
+      response.data.candidates[0].content.parts &&
+      response.data.candidates[0].content.parts[0] &&
+      response.data.candidates[0].content.parts[0].text
+    ) {
+      return response.data.candidates[0].content.parts[0].text;
+    } else {
+      return 'Could not get a valid translation from the AI.';
+    }
+  } catch (error) {
+    console.error('Error fetching AI response:', error);
+    return 'Error occurred while fetching AI response.';
+  }
+};
+
+
+
+
+
+const handleTranslateMessage = async (body, targetLanguage) => {
+  const translatedText = await generateAIAnswer(body, targetLanguage);
+  alert(`Translated to ${targetLanguage}: ${translatedText}`);
+  setShowOkButton(false); // Hide the "OK" button after translation
+};
+
+const handleLanguageSelect = (language) => {
+  setSelectedLanguage(language);
+  setShowOkButton(true); // Show the "OK" button when a language is selected
+};
+
+
   return (
     <div className="chat-container flex flex-col h-screen w-screen bg-slate-200">
        <header
@@ -624,7 +724,7 @@ useEffect(() => {
                       <div
                         key={`${index}-${imgIndex}`}
                         className="relative w-[40px] h-[40px] sm:w-[60px] sm:h-[60px]"
-                        onClick={() => openDialog(url)}
+                        onClick={() => openDialogBox(url)}
                       >
                       <img
   src={url}
@@ -695,85 +795,204 @@ useEffect(() => {
           </div>
         ) : (
           <div className="messages-container space-y-4">
-          {messages.map((message) => {
-            const isCurrentUser = message.senderName === user?.name;
-            const isImageMessage = message.imageUrl && message.imageUrl.length > 0;
-        
-            return (
-              <div
-                key={message.$id}
-                className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
-              >
-                <div
-                  className={`message-box px-3 rounded-lg shadow-lg max-w-[60%] ${
-                    isCurrentUser
-                      ? "bg-[#18b4e4] text-white self-end rounded-tr-none"
-                      : "bg-gray-100 text-black self-start rounded-tl-none"
-                  } relative`}
-                >
-                  {/* Message Time */}
-                  <span className={`message-time text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
-                    {new Date(message.$createdAt).toLocaleDateString()}
-                  </span>
-        
-                  {/* Message Content */}
-      <div className="message-content">
-        <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
-          {isCurrentUser ? `${user?.name} (You)` : message.senderName}
-        </p>
-        {!isImageMessage && <p className="text-[16px] py-1">{message.PersonalMessage}</p>}
+  {messages.map((message) => {
+    const isCurrentUser = message.senderName === user?.name;
+    const isImageMessage = message.imageUrl && message.imageUrl.length > 0;
+    const isTextMessage = !isImageMessage;
+    
 
-        {/* Display Image If Exists */}
-        {isImageMessage && (
-          <div className="image-container mt-2 relative">
-            {message.imageUrl.map((url, index) => (
-              <div key={index} className="relative" onClick={() => openDialog(url)}>
-                {!isCurrentUser && !downloadedImages[url] && (
-                  <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
-                    See Image 
-                  </div>
-                )}
-                <img
-                  src={url}
-                  alt={`Uploaded ${index + 1}`}
-                  className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${!isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"}`}
-                  style={{
-                    boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px'
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Dialog for Image Preview */}
-      <Dialog
-        open={dialogOpen}
-        className="bg-gray-800"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg?t=st=1736347661~exp=1736351261~hmac=5fe0af02bf8072ece1ec264d2591cd2789b0a22ac6646520776a59d1d4f50e0a&w=740')`,
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-        onClick={(e) => {
-          // Prevent backdrop click from closing the dialog
-          if (e.target.classList.contains('dialog-overlay')) {
-            e.stopPropagation();
-          }
-        }}
+    return (
+      <div
+        key={message.$id}
+        className={`message flex ${isCurrentUser ? "justify-end" : "justify-start"} items-start`}
       >
-        <div className="dialog-overlay">
-          <DialogHeader
-            className="text-2xl text-cyan-300 font-bold tracking-wide"
-            style={{ background: 'top right rgba(15, 16, 16, 0.16)' }}
+        <div
+          className={`message-box px-3 rounded-lg max-w-[60%]  ${
+            isCurrentUser
+              ? "bg-[#18b4e4] text-white self-end rounded-tr-none"
+              : "bg-gray-100 text-black self-start rounded-tl-none"
+          } relative`}
+          style={{
+            boxShadow:
+              "rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px",
+          }}
+        >
+          {/* Message Time */}
+          <span
+            className={`message-time text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}
           >
-            <p>{user?.name ? `✨ Image from ${user.name} ✨` : '🌟 Shared Image Preview 🌟'}</p>
-          </DialogHeader>
+            {new Date(message.$createdAt).toLocaleDateString()}
+          </span>
 
-          <DialogBody className="relative flex justify-center items-center min-h-[65vh]">
-            <div className="absolute top-2 right-2 text-xs text-cyan-500 font-semibold rounded-md z-10 p-2" style={{backgroundColor:'rgba(5, 9, 17, 0.39)'}}>
+          {/* Message Content */}
+          <div className="message-content">
+            <p className={`text-[12px] font-semibold ${isCurrentUser ? "text-black" : "text-blue-500"}`}>
+              {isCurrentUser ? `${user?.name} (You)` : message.senderName}
+            </p>
+            {!isImageMessage && (
+  <p className="py-1 text-[12px] sm:text-[12px] md:text-[14px] lg:text-[16px]">
+    {message.PersonalMessage}
+  </p>
+)}
+
+
+            {/* Display Image If Exists */}
+            {isImageMessage && (
+              <div className="image-container mt-2 relative">
+                {message.imageUrl.map((url, index) => (
+                  <div key={index} className="relative" onClick={() => openDialogBox(url)}>
+                    {!isCurrentUser && !downloadedImages[url] && (
+                      <div className="absolute cursor-pointer inset-0 flex items-center justify-center bg-black bg-opacity-50 text-cyan-400 text-lg font-mono rounded-lg z-50">
+                        See Image
+                      </div>
+                    )}
+                    <img
+                      src={url}
+                      alt={`Uploaded ${index + 1}`}
+                      className={`message-image max-w-full max-h-60 rounded-lg cursor-pointer ${!isCurrentUser && !downloadedImages[url] ? "blur-sm" : "blur-none"}`}
+                      style={{
+                        boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+
+          {/* Options for current user */}
+          {isCurrentUser && (
+            <div className="absolute top-1 right-1 text-white hover:text-black">
+              {/* Edit, Delete, and Translate options */}
+              <button onClick={() => toggleMenu(message.$id)} className="text-white hover:text-black">
+                <FaEllipsisV size={12} />
+              </button>
+
+              {/* Menu Options */}
+              {selectedMenu === message.$id && (
+                <div className="absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30" style={{ minWidth: "120px" }}>
+                  <button onClick={() => deleteMessage(message.$id)} className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600">
+                    <FaTrash size={12} />
+                    <span>Delete</span>
+                  </button>
+
+                  {/* Edit option only for text messages */}
+                  {isTextMessage && (
+                    <button onClick={() => editMessage(message.$id, message.PersonalMessage)} className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600">
+                      <FaEdit size={12} />
+                      <span>Edit</span>
+                    </button>
+                  )}
+
+                  {/* Translate option */}
+                  {isTextMessage && (
+                    <select
+                      onChange={(e) => {
+                        handleLanguageSelect(e.target.value);
+                        setShowOkButton(true); // Ensure OK button shows up immediately after language selection
+                      }}
+                      className="text-green-500 text-center text-sm"
+                      value={selectedLanguage || ""}
+                    >
+                      <option value="" className="text-gray-400 text-sm">
+                        Translate
+                      </option>
+                      <option value="Telugu" className="text-gray-400 text-sm">
+                        Telugu
+                      </option>
+                      <option value="Hindi" className="text-gray-400">
+                        Hindi
+                      </option>
+                      <option value="Tamil" className="text-gray-400">
+                        Tamil
+                      </option>
+                      <option value="Malayalam" className="text-gray-400">
+                        Malayalam
+                      </option>
+                      <option value="Kannada" className="text-gray-400">
+                        Kannada
+                      </option>
+                      <option value="English" className="text-gray-400">
+                        English
+                      </option>
+                    </select>
+                  )}
+
+                  {selectedLanguage && showOkButton && isTextMessage && (
+                    <button
+                      onClick={() => handleTranslateMessage(message.PersonalMessage, selectedLanguage)}
+                      className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
+                    >
+                      OK
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Options for other users */}
+          {!isCurrentUser && isTextMessage && (
+            <div className="absolute top-1 right-1">
+              <button
+                onClick={() => toggleMenu(message.$id)}
+                className="text-gray-500 hover:text-black"
+              >
+                <FaEllipsisV size={12} />
+              </button>
+
+              {selectedMenu === message.$id && (
+                <div className="absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30" style={{ minWidth: "120px" }}>
+                  <select
+                    onChange={(e) => {
+                      handleLanguageSelect(e.target.value);
+                      setShowOkButton(true);
+                    }}
+                    className="text-green-500 text-center text-sm"
+                    value={selectedLanguage || ""}
+                  >
+                    <option value="" className="text-gray-400 text-sm">
+                      Translate
+                    </option>
+                    <option value="Telugu" className="text-gray-400">
+                      Telugu
+                    </option>
+                    <option value="Hindi" className="text-gray-400">
+                      Hindi
+                    </option>
+                    <option value="Tamil" className="text-gray-400">
+                      Tamil
+                    </option>
+                    <option value="Malayalam" className="text-gray-400">
+                      Malayalam
+                    </option>
+                    <option value="Kannada" className="text-gray-400">
+                      Kannada
+                    </option>
+                    <option value="English" className="text-gray-400">
+                      English
+                    </option>
+                  </select>
+
+                  {selectedLanguage && showOkButton && (
+                    <button
+                      onClick={() => handleTranslateMessage(message.PersonalMessage, selectedLanguage)}
+                      className="bg-blue-500 text-white px-4 w-full rounded-md mt-2 text-[12px]"
+                    >
+                      OK
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <Dialog open={dialogOpen}  className="" style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://img.freepik.com/free-vector/seamless-pattern-with-speech-bubbles-communication-speak-word-illustration_1284-52009.jpg')`, backgroundSize: "100% 100%", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+              <DialogHeader className="text-2xl text-cyan-300 font-bold">
+                {/*<p className="text-xl">✨ Image Shared by {dialogUsername} ✨</p>*/}
+              </DialogHeader>
+              <DialogBody className="flex justify-center items-center min-h-[65vh]">
+              <div className="absolute top-2 right-2 text-xs text-cyan-500 font-semibold rounded-md z-10 p-2" style={{backgroundColor:'rgba(5, 9, 17, 0.39)'}}>
               <span>
                 {new Date(message.timestamp).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" })}
               </span>,
@@ -781,17 +1000,26 @@ useEffect(() => {
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>
-
-            <div className="container3D noselect">
-              <div className="canvas">
-                {/* Add 3D effects if needed */}
-              </div>
+                
+              <div className="container3D  noselect">
+            <div className="canvas">
+              <div className="tracker tr-1"></div>
+              <div className="tracker tr-2"></div>
+              <div className="tracker tr-3"></div>
+              <div className="tracker tr-4"></div>
+              <div className="tracker tr-5"></div>
+              <div className="tracker tr-6"></div>
+              <div className="tracker tr-7"></div>
+              <div className="tracker tr-8"></div>
+              <div className="tracker tr-9"></div>
               <div id="card">
+                
                 <div className="card-content">
                   <div className="card-glare"></div>
                   <div className="cyber-lines">
                     <span></span><span></span><span></span><span></span>
                   </div>
+                  
                   <img 
                     src={dialogImage} 
                     alt="Shared" 
@@ -801,94 +1029,43 @@ useEffect(() => {
                     <span className='text-cyan-300'>Image Shared by</span>
                     <span className="highlight "> {message.senderName}</span>
                   </div>
+                 
                   <div className="card-particles">
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span> <span></span><span></span
+              ><span></span>
                   </div>
+                  <div className="corner-elements">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                  <div className="scan-line"></div>
                 </div>
               </div>
             </div>
-          </DialogBody>
+          </div>
+          
+          
+              </DialogBody>
+              <DialogFooter>
+                <button onClick={closeDialogBox} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>Close</button>
+                <button onClick={() => handleDownload(dialogImage)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-2" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>
+                  <FaDownload />
+                </button>
+              </DialogFooter>
+            </Dialog>
 
-          <DialogFooter>
-            <button onClick={closeDialog} className="bg-white text-red-600 px-4 py-1 rounded-lg font-semibold hover:bg-red-100" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>
-              Close
-            </button>
-            <button onClick={() => handleDownload(dialogImage)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-2" style={{ boxShadow: 'rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px' }}>
-              <FaDownload />
-            </button>
-          </DialogFooter>
-        </div>
-      </Dialog>
-
-
-                  {/* Options for current user (edit and delete) */}
-                  {isCurrentUser && (
-                    <div className="absolute top-1 right-1 text-white hover:text-black">
-                      {/* Edit and Delete options */}
-                      <button
-                        onClick={() => toggleMenu(message.$id)}
-                        className="text-white hover:text-black"
-                      >
-                        <FaEllipsisV size={12} />
-                      </button>
-        
-                      {/* Menu Options */}
-                      {selectedMenu === message.$id && (
-                        <div
-                          className="absolute right-0 top-8 shadow-md bg-white rounded-lg p-4 z-30"
-                          style={{ minWidth: "120px" }}
-                        >
-                          <button
-                            onClick={() => deleteMessage(message.$id)} // Implement deleteMessage function
-                            className="block w-full text-xs text-red-500 hover:bg-red-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-red-600"
-                          >
-                            <FaTrash size={12} />
-                            <span>Delete</span>
-                          </button>
-        
-                          {/* Edit option only for text messages */}
-                          {!isImageMessage && (
-                            <button
-                              onClick={() => editMessage(message.$id, message.PersonalMessage)} // Implement editMessage function
-                              className="block w-full text-xs text-blue-500 hover:bg-blue-100 rounded-md flex items-center justify-center gap-1 py-1 px-2 hover:shadow-lg hover:border-b-2 border-blue-600"
-                            >
-                              <FaEdit size={12} />
-                              <span>Edit</span>
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-        
-                  {/* Timestamp */}
-                  <small className={`text-[10px]  ${isCurrentUser ? "text-white" : "text-black"}`}>
+          {/* Timestamp */}
+          <small className={`text-[10px] ${isCurrentUser ? "text-white" : "text-black"}`}>
             {formatTime(new Date(message.timestamp))}
           </small>
-                </div>
-              </div>
-            );
-          })}
-        
-          {/* Image Modal */}
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-              <div className="relative">
-                <button
-                  className="absolute top-2 right-2 text-white bg-gray-800 hover:bg-gray-900 rounded-full p-1"
-                  onClick={closeModal}
-                >
-                  ✕
-                </button>
-                <img
-                  src={modalImage}
-                  alt="Modal View"
-                  className="max-w-[90vw] max-h-[90vh] rounded-lg"
-                />
-              </div>
-            </div>
-          )}
+          
         </div>
+      </div>
+    );
+  })}
+</div>
+
+        
+
   )}
       </div>
       <form onSubmit={handleSubmit} className="message-input-form flex items-center gap-2 px-3 p-3 bg-[#001529] justify-center">
@@ -897,7 +1074,7 @@ useEffect(() => {
       value={messageBody}
       onFocus={() => setIsMessageFocused(true)}
       onBlur={() => setIsMessageFocused(false)}
-      onChange={(e) => setMessageBody(e.target.value)}
+      onChange={(e) => {setMessageBody(e.target.value); handleTyping(e)}}
       placeholder="Type your message..."
       className={`input-text bg-gray-700 text-white w-[70%] p-3 rounded-lg shadow-md resize-none ${isMessageFocused ? "h-20" : "h-12"} transition-all`}
     ></textarea>
@@ -909,7 +1086,9 @@ useEffect(() => {
     >
       😀
     </button>
-
+    <div>
+    {otherUserTyping && <p>Other user is typing...</p>}
+  </div>
     {showPicker && (
       <div className="emoji-picker absolute bottom-16 right-4 z-50">
         <EmojiPicker onEmojiClick={handleEmojiClick} />
