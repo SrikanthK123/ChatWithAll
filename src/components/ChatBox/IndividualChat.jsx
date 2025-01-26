@@ -487,7 +487,7 @@ const handleDownload = (url) => {
 
   
   return (
-    <div className="bg-slate-200 w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url(https://img.freepik.com/free-vector/pastel-blue-watercolor-background-vector_53876-62430.jpg?t=st=1732900085~exp=1732903685~hmac=df29dc26604d2568ebb61693167ae0eb70d90f1b34db2d4cdc2592ab88c54843&w=740)',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
+    <div className=" w-full min-h-screen flex flex-col " style={{background:'linear-gradient(to bottom,transparent),linear-gradient(to top, black, transparent),url()',backgroundRepeat:'no-repeat',backgroundPosition:'center',backgroundSize:'cover'}}>
      <div
   className="fixed top-0 left-0 right-0 flex justify-center items-center p-3 z-30"
   style={{ backgroundColor: 'rgb(62 76 188 / 16%)' }}

@@ -10,7 +10,7 @@ const Chat = () => {
   const { user } = useUser(); // Destructure user from the context
 
   return (
-    <div className="w-screen h-screen bg-[#005ce6]">
+    <div className="w-screen h-screen bg-[#005ce6]" style={{background:'url(https://1.bp.blogspot.com/-qKJDPZtKCXI/WFQr28acYdI/AAAAAAAAHCQ/DvIsrul4Oyo/w600-h1024-c/multimedia-symbols-pattern-galaxy-note-hd-wallpaper.jpg)'}}>
       <div className="flex h-full">
         {/* Left Sidebar */}
         <div className="md:w-64">

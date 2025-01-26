@@ -111,10 +111,18 @@ const Leftsidebar = () => {
    const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-   // Filter users based on the search query
-   const filteredUsers = userData?.filter((userItem) =>
-    userItem.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+   // Filter users based on the search query and remove duplicates
+const filteredUsers = Array.from(
+  new Map(
+    userData
+      ?.filter((userItem) =>
+        userItem.username.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .map((user) => [user.username, user]) // Map usernames to user objects
+  ).values()
+);
+
+  
 
   return (
     <>
@@ -205,6 +213,7 @@ const Leftsidebar = () => {
               imageUrl="https://randomuser.me/api/portraits/lego/1.jpg" // Placeholder image for current user https://img.freepik.com/free-vector/robotic-artificial-intelligence-technology-smart-lerning-from-bigdata_1150-48136.jpg?t=st=1734702821~exp=1734706421~hmac=ae290813fa3cae9ca912cfa71ca3a1aee25d98e2c90250b4b6471aba132a3013&w=900
               style={{ backgroundColor:'#0066ff',color:'white' }} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-microchip-background-vector-digital-transformation-concept_53876-112222.jpg?t=st=1734702333~exp=1734705933~hmac=dba4e2f955532d862555b5f9887b5dad4229fd2e584da90474be3c3aabe46c53&w=740
               //activeUpdate="Online"
+              personalMessage="Enjoy"
             />
           )}
            
@@ -219,19 +228,25 @@ const Leftsidebar = () => {
 
           {/* Map through other users */}
           {/* Map through other users */}
-{Array.from(new Map(userData.map((user) => [user.username, user]))).map(
-  ([_, user]) => (
-    <SidebarItem
-      key={user.$id}
-      userId={user.$id}
-      label={user.username}
-      personalMessage="Online"
-      imageUrl={`https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 4)}.jpg`}
-      onClick={() => handleUserClick(user.username, user.$id)}
-      activeUpdate={formatTimestamp(user.$updatedAt)} // Use updatedAt here
-    />
-  )
+          {Array.from(new Map(userData.map((user) => [user.username, user]))).map(
+  ([_, user]) => {
+    // Generate a consistent "random" index based on the user's ID
+    const avatarIndex = Math.abs(user.$id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 4;
+
+    return (
+      <SidebarItem
+        key={user.$id}
+        userId={user.$id}
+        label={user.username}
+        personalMessage="Online"
+        imageUrl={`https://randomuser.me/api/portraits/lego/${avatarIndex}.jpg`} // Consistent avatar
+        onClick={() => handleUserClick(user.username, user.$id)}
+        //activeUpdate={formatTimestamp(user.$updatedAt)} // Use updatedAt here
+      />
+    );
+  }
 )}
+
 
         </>
       ) : error ? (
