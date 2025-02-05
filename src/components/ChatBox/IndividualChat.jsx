@@ -524,12 +524,12 @@ const handleDownload = (url) => {
         </span>
 
         {/* Render sender name */}
-        <span className={`text-xs font-semibold block mb-1 ${isCurrentUser ? "text-black" : "text-blue-600"}`}>
+        <span className={`text-[12px] font-semibold block mb-1 ${isCurrentUser ? "text-black" : "text-blue-600"}`}>
           {isCurrentUser ? `${msg.username} (You)` : msg.username || "Anonymous"}
         </span>
 
         {/* Render text message */}
-        {!isImageMessage && <p className="text-md font-semibold break-words">{msg.body}</p>}
+        {!isImageMessage && <p className="text-md font-semibold break-words text-[12px] sm:text-[12px] md:text-[14px] lg:text-[16px]">{msg.body}</p>}
 
         {/* Render image message */}
         {isImageMessage && (
