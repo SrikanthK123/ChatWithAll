@@ -57,6 +57,7 @@ const [imageUrlLoaded, setImageUrlLoaded] = useState(false);
 
 
 
+
 const generateAIAnswer = async (textToTranslate, targetLanguage) => {
   const API_KEY = GEMINI_API_KEY;
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
@@ -246,6 +247,7 @@ const closeDialog = () => {
       }
     }
   };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
