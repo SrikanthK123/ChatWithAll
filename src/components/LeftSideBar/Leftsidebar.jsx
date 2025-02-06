@@ -21,6 +21,7 @@ const Leftsidebar = () => {
   const { users, error } = AlluseUsers(); // Fetch all users
   const [userData, setUserData] = useState(null); 
   const [searchQuery, setSearchQuery] = useState(""); // State to store search query
+  const [showAI, setShowAI] = useState(false); // State to control AI translation visibility
 
 
 
@@ -198,9 +199,13 @@ const filteredUsers = Array.from(
         ))}
       </datalist>
     </div>
-
-    <h3 className="text-lg font-bold mt-2">Group Members</h3>
+    <div className="flex justify-between my-2" >
+    <h3 className="text-lg font-bold mt-2">Group Members </h3>
+    
+    <input className="switch mt-3" type="checkbox" checked={showAI} onClick={()=>setShowAI(!showAI)} />
+    </div>
     <hr />
+    
     <ul className="space-y-3 p-1 overflow-y-auto h-[calc(100vh-180px)] scrollbar-hidden pb-10 pt-2 "> {/* Added overflow-y-auto here */}
       {userData && userData.length > 0 ? (
         <>
@@ -216,8 +221,9 @@ const filteredUsers = Array.from(
               personalMessage="Enjoy"
             />
           )}
-           
-         <Link to="/AiChat"> <p className='my-2 AIChat'> <SidebarItem 
+          {
+            showAI &&(
+              <Link to="/AiChat"> <p className='my-2 AIChat'> <SidebarItem 
              
               
              label={`Chat With AI`}
@@ -225,6 +231,10 @@ const filteredUsers = Array.from(
              style={{ backgroundColor:'#0891b2 ',color:'white'}} // Custom background color for current user https://img.freepik.com/free-vector/ai-technology-robot-cyborg-illustrations_24640-134419.jpg?t=st=1734702399~exp=1734705999~hmac=3bc66e499d031a323aaa3b638938861b6052d8fd9287cb8edac28e0bab9cd6ec&w=740
              //activeUpdate="Online"
            /></p></Link>
+            )
+          }
+           
+         
 
           {/* Map through other users */}
           {/* Map through other users */}
