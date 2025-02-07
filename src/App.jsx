@@ -18,6 +18,7 @@ import BucketTest from './components/BucketTest';
 import AIChat from './components/AIChat';
 import ImageSent from './components/ChatBox/ImageSent';
 import AITranslater from './components/AITranslater';
+import NewsUpdates from './components/ChatBox/NewsUpdates';
 
 function App() {
   const user = useUser();
@@ -38,6 +39,7 @@ function App() {
         <Route path='/AiChat' element={<AIChat/>} />
         <Route path='/ImageSent' element={<ImageSent/>} />
         <Route path='/AITranslater' element={<AITranslater/>} />
+        <Route path='/TechNews' element={<NewsUpdates/>} />
       </Routes>
     </Router>
   );

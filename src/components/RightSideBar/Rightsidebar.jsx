@@ -273,8 +273,8 @@ useEffect(() => {
       <div
         className={`fixed top-0 right-0 h-screen w-72 z-40 bg-slate-800 text-white shadow-lg transition-transform duration-300 ease-in-out overflow-y-auto transform ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } md:translate-x-0`}
-      >
+        } md:translate-x-0`}>
+          
         <div className="flex flex-col items-center justify-center p-4 mt-12 relative">
           <div className="relative group w-32 h-32">
             <img
@@ -360,7 +360,10 @@ useEffect(() => {
 
 </div>
 <ul className="space-y-3 pt-3">
-            <SidebarItem label="Notifications" icon={<FaBell />} />
+            <Link to="/TechNews">
+            <SidebarItem label="Tech Updates" icon={<FaBell className="text-orange-400" />} />
+            </Link>
+           
             <Link to="/Profile">
               <SidebarItem label="Profile" icon={<FaUser />} />
             </Link>
