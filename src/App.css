@@ -1071,3 +1071,75 @@ background-position: left, right;
   background-color: rgb(30, 126, 173);
   border-color: rgb(30, 126, 173);
 }
+/* Modern success message styles */
+.modern-success-message {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background: linear-gradient(135deg, #051216, #10335e);
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  color: white;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  margin-bottom: 10px;
+}
+
+.modern-success-message:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+.icon-wrapper {
+  background-color: rgba(104, 205, 230, 0.592);
+  padding: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.success-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.text-wrapper {
+  flex: 1;
+}
+
+.text-wrapper .title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: capitalize;
+  color: #fff;
+}
+
+.text-wrapper .message {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.9;
+  color: #fff;
+}
