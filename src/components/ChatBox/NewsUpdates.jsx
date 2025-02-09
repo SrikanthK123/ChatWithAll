@@ -113,7 +113,7 @@ const NewsUpdates = () => {
               </motion.div>
             ))
           ) : (
-            <div className="flex justify-center items-center flex-col space-y-6 p-6 bg-gradient-to-r from-[#4177b5] via-[#5693d9] to-[#4177b5] rounded-lg shadow-xl">
+            <div className="flex justify-center items-center flex-col space-y-6 p-6 bg-gradient-to-r from-[#001529] via-[#223952] to-[#020406] rounded-lg shadow-xl">
               <div className="flex justify-center items-center space-x-4 mt-10 mb-6">
                 <img
                   src="https://img.freepik.com/free-vector/no-data-concept-illustration_114360-536.jpg"
@@ -122,9 +122,9 @@ const NewsUpdates = () => {
                 />
               </div>
               <p className="text-xl text-white font-semibold">
-                🚨 <span className="text-yellow-400">Dear {userData?.name},</span> no updates available right now. 😔
+                🚨 Dear<span className="text-blue-400"> {userData?.name},</span> no updates available right now. 😔
               </p>
-              <p className="text-lg text-white mt-4">Stay tuned! More news is on its way! 🚀✨</p>
+              <p className="text-lg text-white mt-2">Stay tuned! More news is on its way! 🚀✨</p>
             </div>
           )}
         </AnimatePresence>
