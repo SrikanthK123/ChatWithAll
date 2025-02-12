@@ -7,6 +7,7 @@ import { account, storage, databases,client } from "../../lib/appwrite";
 import PropTypes from "prop-types";
 import { ID, Permission, Role,Query } from "appwrite";
 import toast from "react-hot-toast";
+import RunningAmoungUs from "../../assets/Images/RunningAmongUs.gif"
 
 
 const Rightsidebar = () => {
@@ -353,7 +354,28 @@ useEffect(() => {
         />
       ))
     ) : (
-      <p className="text-[#f70776] text-center mt-4 text-sm font-semibold">Loading Images.....</p>
+      <p className="text-[#f70776] text-center mt-4 text-sm font-semibold flex items-center space-x-2">
+      {/* Mirrored first image */}
+      <img 
+        src="https://img1.picmix.com/output/stamp/normal/5/5/9/2/1962955_3b845.gif" 
+        alt="Image Loading" 
+        style={{ width: '80px', height: '50px', transform: 'scaleX(-1)' }} 
+      />
+    
+      {/* Centered text */}
+      <span className="whitespace-nowrap">Loading Images.....</span>
+    
+      {/* Second image (closer to text) */}
+      <img 
+        src={RunningAmoungUs} 
+        alt="Image Loading" 
+        className="mb-1"
+        style={{ width: '100px', height: '80px' }} 
+      />
+    </p>
+    
+
+
     )}
   </div>
   

@@ -54,7 +54,8 @@ const [aiAnswer, setAiAnswer] = useState(null);
 const [selectedLanguage, setSelectedLanguage] = useState(); // Default to Telugu
 const [showOkButton, setShowOkButton] = useState(false);
 const [imageUrlLoaded, setImageUrlLoaded] = useState(false);
-
+const [imageDescription, setImageDescription] = useState("");
+const [imageLocation, setImageLocation] = useState("");
 
 
 
@@ -359,11 +360,9 @@ const closeDialog = () => {
   };
   
   const RandomUserImageGenerated = Math.floor(Math.random() * 50);
-  const handleImageChange = (event) => {
-    const selectedImage = event.target.files[0];
-    setImage(selectedImage);
-    setIsImageSelected(!!selectedImage);
-    setErrorData(null);
+   const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
   };
   const handleUpload = async (event) => {
     event.preventDefault();
@@ -484,7 +483,9 @@ const handleDownload = (url) => {
       console.error('Download failed:', error);
     });
 };
-// Translating text 
+// Desc and Location 
+
+
 
 
   
